@@ -1,0 +1,925 @@
+import type { GrammarQuizQuestion, TenseGuide } from '../types/english';
+
+export const TENSE_GUIDES: TenseGuide[] = [
+  {
+    id: 'present-simple',
+    category: 'present',
+    titleSk: 'Prítomný jednoduchý čas',
+    titleEn: 'Present Simple',
+    subtitleSk: 'Zvyky, pravidelné činnosti, fakty a trvalé stavy',
+    whenToUseSk: [
+      'Opakované činnosti a zvyky (každý deň, v piatok, zvyčajne).',
+      'Všeobecné pravdy, prírodné zákony a fakty (Voda vrie pri 100 °C).',
+      'Trvalé situácie a rozvrhy vlakov, kín či kurzov.',
+    ],
+    slovakBridgeSk:
+      'Slovenčina má iba jeden prítomný čas („pijem kávu“), ale angličtina rozlišuje, či kávu pijete ZVYČAJNE (Present Simple: I drink coffee) alebo PRÁVE TERAZ (Present Continuous: I am drinking coffee).',
+    signalWords: [
+      { en: 'always', sk: 'vždy' },
+      { en: 'usually', sk: 'zvyčajne' },
+      { en: 'often', sk: 'často' },
+      { en: 'sometimes', sk: 'niekedy' },
+      { en: 'never', sk: 'nikdy' },
+      { en: 'every day / week', sk: 'každý deň / týždeň' },
+    ],
+    formingRulesSk: [
+      {
+        title: 'Základná tvorba (V1 + s pre he/she/it)',
+        points: [
+          'Pre I, you, we, they použijeme čistý 1. tvar slovesa (V1): I go, we work, they speak.',
+          'Pre he, she, it pridáme koncovku -s (alebo -es po -ch, -sh, -s, -x, -o: goes, watches; spoluhláska+y → -ies: flies, studies).',
+          'V zápore a otázke príde pomocné sloveso do / does (don’t / doesn’t) a hlavné sloveso stratí -s (Does she go? — nie Does she goes!).',
+        ],
+      },
+      {
+        title: 'Pozor na výnimku: sloveso „to be“ (byť)',
+        points: [
+          'Sloveso „be“ si vystačí samo bez do/does: I am, you/we/they are, he/she/it is.',
+          'Otázka prehodením: Are you ready? / Záporná otázka: Aren’t you cold? / Isn’t she here?',
+        ],
+      },
+    ],
+    commonMistakeSk: {
+      wrong: 'Does she goes to work by car?',
+      right: 'Does she go to work by car?',
+      explanationSk:
+        'Koncovku -s už na seba prevzalo pomocné sloveso „does“. Hlavné sloveso zostáva v čistom 1. tvare „go“.',
+    },
+    matrix: [
+      {
+        polarity: 'aff',
+        labelSk: 'Kladná veta (+)',
+        badge: '+',
+        formula: 'Podmet + V1 (he/she/it + -s/-es)',
+        en: 'She speaks English and drinks tea every morning.',
+        sk: 'Hovorí po anglicky a každé ráno pije čaj.',
+        whySk: 'Pre „she“ v kladnej vete pridávame -s k V1 (speaks, drinks).',
+      },
+      {
+        polarity: 'neg',
+        labelSk: 'Záporná veta (-)',
+        badge: '−',
+        formula: "Podmet + don't / doesn't + V1",
+        en: "She doesn't drink coffee in the evening.",
+        sk: 'Večer nepije kávu.',
+        whySk: 'Pre „she“ použijeme doesn’t a hlavné sloveso „drink“ je bez -s.',
+      },
+      {
+        polarity: 'qPos',
+        labelSk: 'Pozitívna otázka (?+)',
+        badge: '?+',
+        formula: 'Do / Does + podmet + V1?',
+        en: 'Does she speak German too?',
+        sk: 'Hovorí aj po nemecky?',
+        whySk: 'Na začiatok ide Does, za ním podmet she a základný 1. tvar „speak“.',
+      },
+      {
+        polarity: 'qNeg',
+        labelSk: 'Negatívna otázka (?−)',
+        badge: '?−',
+        formula: "Don't / Doesn't + podmet + V1?",
+        en: "Doesn't she speak Slovak?",
+        enFormal: 'Does she not speak Slovak?',
+        sk: 'Nehovorí po slovensky? (Vari nevie po slovensky?)',
+        whySk:
+          'Vyjadruje prekvapenie alebo overenie si očakávanej odpovede. V hovorovej reči dávame „Doesn’t“ hneď na začiatok.',
+      },
+    ],
+    shortAnswers: {
+      positiveQ: 'Do you live in Trnava?',
+      yes: 'Yes, I do.',
+      no: 'No, I don’t.',
+      negativeQ: "Don't you live in Trnava?",
+      negAnswerNoteSk:
+        'Ak tam BÝVAŠ → „Yes, I do.“ Ak tam NEBÝVAŠ → „No, I don’t.“ (Na rozdiel od slovenčiny nikdy nehovoríme „Áno, nebývam“!).',
+    },
+  },
+  {
+    id: 'present-continuous',
+    category: 'present',
+    titleSk: 'Prítomný priebehový čas',
+    titleEn: 'Present Continuous',
+    subtitleSk: 'Čo sa deje práve teraz, v tomto období alebo blízky dohodnutý plán',
+    whenToUseSk: [
+      'Dej prebiehajúci presne v momente, keď o ňom hovoríme (Práve teraz píšem e-mail).',
+      'Dočasná situácia v tomto týždni/mesiaci (Tento mesiac bývam u sestry).',
+      'Pevne dohodnutý blízky plán do budúcnosti s presným časom (Zajtra o piatej sa stretávam s Petrom).',
+    ],
+    slovakBridgeSk:
+      'V slovenčine si ho pomôžete predstaviť pridaním slov „práve teraz“ alebo „momentálne“. Stavové slovesá ako know, like, want, understand, believe sa do -ing zvyčajne nedávajú!',
+    signalWords: [
+      { en: 'now', sk: 'teraz' },
+      { en: 'right now', sk: 'práve teraz' },
+      { en: 'at the moment', sk: 'v tejto chvíli' },
+      { en: 'Look! / Listen!', sk: 'Pozri! / Počúvaj!' },
+      { en: 'today / this week', sk: 'dnes / tento týždeň' },
+    ],
+    formingRulesSk: [
+      {
+        title: 'Vzorec: am / is / are + sloveso-ing',
+        points: [
+          'I am (I’m), you/we/they are (you’re), he/she/it is (he’s) + tvar s -ing.',
+          'Pravopis -ing: nemé -e odpadá (write → writing, make → making); krátke jednoslabičné slovesá zdvojujú koncovú spoluhlásku (sit → sitting, run → running, swim → swimming); -ie sa mení na -y (lie → lying).',
+        ],
+      },
+      {
+        title: 'Otázka a zápor',
+        points: [
+          'Pomocné „do/does“ tu NEPOUŽÍVAME! Otázku tvoríme prehodením am/is/are pred podmet.',
+          'V zápore stačí pridať not: I am not working / he isn’t coming / they aren’t listening.',
+        ],
+      },
+    ],
+    commonMistakeSk: {
+      wrong: 'Do you working right now?',
+      right: 'Are you working right now?',
+      explanationSk:
+        'V priebehovom čase už máme pomocné sloveso „be“ (am/is/are), preto nikdy nepridávame „do/does“!',
+    },
+    matrix: [
+      {
+        polarity: 'aff',
+        labelSk: 'Kladná veta (+)',
+        badge: '+',
+        formula: 'Podmet + am / is / are + V-ing',
+        en: 'They are sitting in the garden right now.',
+        sk: 'Práve teraz sedia v záhrade.',
+        whySk: 'Pre „they“ dáme „are“ a k „sit“ so zdvojeným t pridáme -ing → sitting.',
+      },
+      {
+        polarity: 'neg',
+        labelSk: 'Záporná veta (-)',
+        badge: '−',
+        formula: 'Podmet + am not / isn’t / aren’t + V-ing',
+        en: "He isn't wearing his glasses today.",
+        sk: 'Dnes nemá na sebe okuliare.',
+        whySk: 'Zápor tvoríme pridaním „not“ k is → isn’t + wearing.',
+      },
+      {
+        polarity: 'qPos',
+        labelSk: 'Pozitívna otázka (?+)',
+        badge: '?+',
+        formula: 'Am / Is / Are + podmet + V-ing?',
+        en: 'Are you writing that email now?',
+        sk: 'Píšeš ten e-mail práve teraz?',
+        whySk: 'Sloveso „Are“ presunieme pred podmet „you“.',
+      },
+      {
+        polarity: 'qNeg',
+        labelSk: 'Negatívna otázka (?−)',
+        badge: '?−',
+        formula: "Aren't / Isn't + podmet + V-ing?",
+        en: "Aren't you coming with us tonight?",
+        enFormal: 'Are you not coming with us tonight?',
+        sk: 'Nejdeš s nami dnes večer?',
+        whySk:
+          'Pre „I am“ sa v zápornej otázke namiesto „amn’t“ používa tvar „Aren’t I... ?“ (napr. Aren’t I right? = Nemám pravdu?).',
+      },
+    ],
+    shortAnswers: {
+      positiveQ: 'Is it raining outside?',
+      yes: 'Yes, it is.',
+      no: "No, it isn't.",
+      negativeQ: "Isn't it raining outside?",
+      negAnswerNoteSk:
+        'Ak PRŠÍ → „Yes, it is.“ Ak NEPRŠÍ → „No, it isn’t.“ V krátkej odpovedi nikdy neopakujeme sloveso s -ing.',
+    },
+  },
+  {
+    id: 'past-simple',
+    category: 'past',
+    titleSk: 'Minulý jednoduchý čas',
+    titleEn: 'Past Simple',
+    subtitleSk: 'Ukončený dej v minulosti (včera, minulý rok, pred hodinou)',
+    whenToUseSk: [
+      'Dej sa stal v konkrétnom čase v minulosti a už sa úplne skončil.',
+      'Rozprávanie príbehov a po sebe nasledujúcich udalostí (Prišiel som, sadol som si a napísal list).',
+      'Minulé zvyky, ktoré už neplatia.',
+    ],
+    slovakBridgeSk:
+      'Presne tu potrebujete 2. tvar nepravidelných slovies (V2: went, saw, wrote)! V slovenčine zodpovedá minulému času dokonavému aj nedokonavému („išiel som“ aj „šiel som“). Pozor: v zápore a otázke sa 2. tvar VŽDY vracia na základný 1. tvar (V1)!',
+    signalWords: [
+      { en: 'yesterday', sk: 'včera' },
+      { en: 'last week / month / year', sk: 'minulý týždeň / mesiac / rok' },
+      { en: 'two days ago', sk: 'pred dvoma dňami' },
+      { en: 'in 2020', sk: 'v roku 2020' },
+      { en: 'when I was a child', sk: 'keď som bol dieťa' },
+    ],
+    formingRulesSk: [
+      {
+        title: 'Kladná veta: pravidelné (-ed) vs nepravidelné (V2)',
+        points: [
+          'Pravidelné slovesá priberajú -ed (work → worked, love → loved, study → studied, stop → stopped).',
+          'Nepravidelné slovesá používajú svoj vlastný 2. tvar (V2): go → went, buy → bought, eat → ate. Tvar je rovnaký pre všetky osoby!',
+        ],
+      },
+      {
+        title: 'Otázka a zápor: pomocné „did / didn’t“ + V1!',
+        points: [
+          'Pomocné „did“ v sebe už nesie minulosť, preto hlavné sloveso MUSÍ byť v 1. tvare (V1): Did you go? (nie Did you went!).',
+          'Výnimka sloveso „to be“: was (I/he/she/it) a were (you/we/they). Nepoužíva did! Otázky: Were you there? / Wasn’t he at home?',
+        ],
+      },
+    ],
+    commonMistakeSk: {
+      wrong: "Did you went to school yesterday? / I didn't saw him.",
+      right: "Did you go to school yesterday? / I didn't see him.",
+      explanationSk:
+        'Najčastejšia chyba na svete! Keď je vo vete „did“ alebo „didn’t“, minulý čas (V2) tam už NESMIE byť — sloveso sa vráti na V1.',
+    },
+    matrix: [
+      {
+        polarity: 'aff',
+        labelSk: 'Kladná veta (+)',
+        badge: '+',
+        formula: 'Podmet + V2 (alebo V-ed)',
+        en: 'We went to Košice and saw an old friend.',
+        sk: 'Išli sme do Košíc a stretli sme (videli) starého kamaráta.',
+        whySk: 'Kladná minulosť = čistý 2. tvar nepravidelného slovesa (went, saw).',
+      },
+      {
+        polarity: 'neg',
+        labelSk: 'Záporná veta (-)',
+        badge: '−',
+        formula: "Podmet + didn't + V1",
+        en: "We didn't go to the cinema yesterday.",
+        sk: 'Včera sme nešli do kina.',
+        whySk: 'Po „didn’t“ sa „went“ vracia na základný 1. tvar „go“.',
+      },
+      {
+        polarity: 'qPos',
+        labelSk: 'Pozitívna otázka (?+)',
+        badge: '?+',
+        formula: 'Did + podmet + V1?',
+        en: 'Did you buy the tickets?',
+        sk: 'Kúpil si tie lístky?',
+        whySk: 'Na začiatok ide „Did“, za ním podmet a 1. tvar „buy“ (nie bought!).',
+      },
+      {
+        polarity: 'qNeg',
+        labelSk: 'Negatívna otázka (?−)',
+        badge: '?−',
+        formula: "Didn't + podmet + V1?",
+        en: "Didn't you get my message?",
+        enFormal: 'Did you not get my message?',
+        sk: 'Nedostal si moju správu? (Ty si ju nedostal?)',
+        whySk:
+          'Skvelé na vyjadrenie prekvapenia v minulosti. Nezabudnite: po „Didn’t“ vždy 1. tvar „get“ (nie got!).',
+      },
+    ],
+    shortAnswers: {
+      positiveQ: 'Did she write that email?',
+      yes: 'Yes, she did.',
+      no: "No, she didn't.",
+      negativeQ: "Didn't she write that email?",
+      negAnswerNoteSk:
+        'Ak ho NAPÍSALA → „Yes, she did.“ (Ale áno, napísala). Ak ho NENAPÍSALA → „No, she didn’t.“ (Nie, nenapísala).',
+    },
+  },
+  {
+    id: 'past-continuous',
+    category: 'past',
+    titleSk: 'Minulý priebehový čas',
+    titleEn: 'Past Continuous',
+    subtitleSk: 'Rozpracovaný dej v konkrétnom okamihu minulosti',
+    whenToUseSk: [
+      'Čo sa práve dialo v konkrétnu hodinu v minulosti (Včera o ôsmej som večeral).',
+      'Dlhší dej na pozadí, ktorý prerušil krátky dej v Past Simple (Keď som spal, zazvonil telefón).',
+      'Dva dlhšie deje prebiehajúce súbežne (Zatiaľ čo som varil, ona čítala).',
+    ],
+    slovakBridgeSk:
+      'Odpovedá na slovenskú otázku „Čo si robil, keď...?“ (nedokonavý vid: spal som, varil som, šoféroval som — proces trvajúci určitý čas, nie jednorazový výsledok).',
+    signalWords: [
+      { en: 'while', sk: 'zatiaľ čo' },
+      { en: 'when', sk: 'keď' },
+      { en: 'at 7 p.m. yesterday', sk: 'včera o 19:00' },
+      { en: 'all evening', sk: 'celý večer' },
+    ],
+    formingRulesSk: [
+      {
+        title: 'Vzorec: was / were + sloveso-ing',
+        points: [
+          'Pre I, he, she, it použijeme „was“ + V-ing (I was sleeping).',
+          'Pre you, we, they použijeme „were“ + V-ing (They were driving).',
+          'Otázka sa tvorí prehodením was/were pred podmet, zápor pomocou wasn’t / weren’t.',
+        ],
+      },
+    ],
+    commonMistakeSk: {
+      wrong: 'When the phone rang, I slept.',
+      right: 'When the phone rang, I was sleeping.',
+      explanationSk:
+        'Spánok bol dlhší rozbehnutý dej na pozadí (Past Continuous: was sleeping), ktorý prerušilo jednorazové zazvonenie (Past Simple: rang).',
+    },
+    matrix: [
+      {
+        polarity: 'aff',
+        labelSk: 'Kladná veta (+)',
+        badge: '+',
+        formula: 'Podmet + was / were + V-ing',
+        en: 'He was driving home when it started snowing.',
+        sk: 'Šoféroval domov, keď začalo snežiť.',
+        whySk: 'Dlhší dej v priebehu (was driving) prerušený krátkym dejom (started).',
+      },
+      {
+        polarity: 'neg',
+        labelSk: 'Záporná veta (-)',
+        badge: '−',
+        formula: "Podmet + wasn't / weren't + V-ing",
+        en: "We weren't watching TV at ten o'clock.",
+        sk: 'O desiatej sme nepozerali televízor.',
+        whySk: 'Pre „we“ dáme weren’t + V-ing.',
+      },
+      {
+        polarity: 'qPos',
+        labelSk: 'Pozitívna otázka (?+)',
+        badge: '?+',
+        formula: 'Was / Were + podmet + V-ing?',
+        en: 'What were you doing at midnight?',
+        sk: 'Čo si robil o polnoci?',
+        whySk: 'Prehodíme „were“ pred podmet „you“.',
+      },
+      {
+        polarity: 'qNeg',
+        labelSk: 'Negatívna otázka (?−)',
+        badge: '?−',
+        formula: "Wasn't / Weren't + podmet + V-ing?",
+        en: "Weren't you listening to me?",
+        enFormal: 'Were you not listening to me?',
+        sk: 'Ty si ma nepočúval?',
+        whySk:
+          'Skvelé pri výčitke alebo prekvapení v minulosti: „Weren’t you sleeping?“ (Nespali ste?).',
+      },
+    ],
+    shortAnswers: {
+      positiveQ: 'Were they waiting for the bus?',
+      yes: 'Yes, they were.',
+      no: "No, they weren't.",
+      negativeQ: "Weren't they waiting for the bus?",
+      negAnswerNoteSk:
+        'Ak ČAKALI → „Yes, they were.“ Ak NEČAKALI → „No, they weren’t.“',
+    },
+  },
+  {
+    id: 'present-perfect',
+    category: 'past',
+    titleSk: 'Predprítomný čas (most k 3. tvaru V3)',
+    titleEn: 'Present Perfect',
+    subtitleSk: 'Skúsenosti a minulé deje s dôsledkom v prítomnosti (have/has + V3)',
+    whenToUseSk: [
+      'Životné skúsenosti bez presného času (Už som niekedy letel / Nikdy som nejedol suši).',
+      'Minulý dej, ktorého výsledok vidíme TERAZ (Stratil som kľúče → teraz sa neviem dostať dnu).',
+      'Dej, ktorý začal v minulosti a stále trvá (Bývam tu už päť rokov).',
+    ],
+    slovakBridgeSk:
+      'Presne na tento čas sa učíme 3. tvar nepravidelných slovies (V3: gone, written, eaten, seen)! Do slovenčiny ho prekladáme ako náš minulý čas (napr. „Už som to urobil“), ale v angličtine ho NEPOUŽÍVAME s „yesterday“ alebo „in 2020“ — vtedy ide vždy Past Simple!',
+    signalWords: [
+      { en: 'ever / never', sk: 'niekedy / nikdy' },
+      { en: 'already / just', sk: 'už / práve' },
+      { en: 'yet', sk: 'ešte (v otázke a zápore)' },
+      { en: 'since / for', sk: 'od (kedy) / už (ako dlho)' },
+      { en: 'recently', sk: 'nedávno' },
+    ],
+    formingRulesSk: [
+      {
+        title: 'Vzorec: have / has + 3. tvar (V3)',
+        points: [
+          'Pre I, you, we, they použijeme „have“ (I’ve); pre he, she, it použijeme „has“ (she’s).',
+          'Hlavné sloveso je VŽDY v 3. tvare (V3 pri nepravidelných: written, done, seen; alebo -ed pri pravidelných).',
+          'V otázke a zápore „have/has“ NEZMIENIME na „did“ — ostáva have/has + V3!',
+        ],
+      },
+    ],
+    commonMistakeSk: {
+      wrong: 'I have seen him yesterday. / Have you saw my keys?',
+      right: 'I saw him yesterday. / Have you seen my keys?',
+      explanationSk:
+        'Dve časté chyby: 1) So slovom „yesterday“ ide vždy Past Simple (saw), nie Present Perfect. 2) Po „have/has“ patrí vždy 3. tvar „seen“, nikdy 2. tvar „saw“!',
+    },
+    matrix: [
+      {
+        polarity: 'aff',
+        labelSk: 'Kladná veta (+)',
+        badge: '+',
+        formula: 'Podmet + have / has + V3',
+        en: 'She has already written three emails today.',
+        sk: 'Dnes už napísala tri e-maily.',
+        whySk: 'Pre „she“ ide „has“ + 3. tvar „written“ (deň „today“ ešte trvá).',
+      },
+      {
+        polarity: 'neg',
+        labelSk: 'Záporná veta (-)',
+        badge: '−',
+        formula: "Podmet + haven't / hasn't + V3",
+        en: "I haven't eaten anything yet.",
+        sk: 'Ešte som nič nejedol.',
+        whySk: 'Po „haven’t“ zostáva 3. tvar „eaten“; na konci zápornej vety je „yet“.',
+      },
+      {
+        polarity: 'qPos',
+        labelSk: 'Pozitívna otázka (?+)',
+        badge: '?+',
+        formula: 'Have / Has + podmet + V3?',
+        en: 'Have you ever been to London?',
+        sk: 'Bol si niekedy v Londýne?',
+        whySk: 'Prehodíme „Have“ pred „you“ a použijeme 3. tvar „been“.',
+      },
+      {
+        polarity: 'qNeg',
+        labelSk: 'Negatívna otázka (?−)',
+        badge: '?−',
+        formula: "Haven't / Hasn't + podmet + V3?",
+        en: "Haven't you finished your homework yet?",
+        enFormal: 'Have you not finished your homework yet?',
+        sk: 'Ty si ešte nedokončil domácu úlohu?',
+        whySk:
+          'Vyjadruje prekvapenie alebo miernu netrpezlivosť, že niečo ešte nie je hotové.',
+      },
+    ],
+    shortAnswers: {
+      positiveQ: 'Have you seen this film?',
+      yes: 'Yes, I have.',
+      no: "No, I haven't.",
+      negativeQ: "Haven't you seen this film yet?",
+      negAnswerNoteSk:
+        'Ak si ho VIDEL → „Yes, I have.“ Ak si ho NEVIDEL → „No, I haven’t.“',
+    },
+  },
+  {
+    id: 'future-will',
+    category: 'future',
+    titleSk: 'Budúci čas s „will“',
+    titleEn: 'Future Simple (will)',
+    subtitleSk: 'Rýchle rozhodnutia teraz, sľuby, ponuky a predpovede',
+    whenToUseSk: [
+      'Okamžité rozhodnutie v sekunde, keď hovoríme (Zvoní telefón → Zdvihnem ho!).',
+      'Sľuby, ponuky pomoci a žiadosti (Pomôžem ti / Prídeš zajtra?).',
+      'Predpovede a názory o budúcnosti po slovách I think, I hope, maybe, probably.',
+    ],
+    slovakBridgeSk:
+      'Veľmi jednoduchá tvorba: „will“ je rovnaké pre všetky osoby (žiadne -s pri he/she/it!) a za ním ide vždy čistý 1. tvar slovesa (V1). V hovorovej reči sa skracuje na ’ll (I’ll go) a zápor je „won’t“ [wount]!',
+    signalWords: [
+      { en: 'tomorrow', sk: 'zajtra' },
+      { en: 'next week / year', sk: 'budúci týždeň / rok' },
+      { en: 'soon', sk: 'čoskoro' },
+      { en: 'I think / I hope', sk: 'myslím, že / dúfam, že' },
+      { en: 'probably', sk: 'pravdepodobne' },
+    ],
+    formingRulesSk: [
+      {
+        title: 'Vzorec: will + V1 (zápor: won’t + V1)',
+        points: [
+          'Modálne sloveso „will“ sa nikdy nemení: I will, he will, they will.',
+          'Zápor „will not“ sa takmer vždy skracuje na „won’t“ [wount] (pozor, nie want!).',
+          'Za will / won’t ide VŽDY základný 1. tvar (V1) BEZ „to“: I will call you (nie I will to call).',
+        ],
+      },
+    ],
+    commonMistakeSk: {
+      wrong: 'She wills come tomorrow. / I will to help you.',
+      right: 'She will come tomorrow. / I will help you.',
+      explanationSk:
+        'Po „she“ k „will“ nepridávame -s, a po „will“ nikdy nepíšeme „to“ pred ďalším slovesom.',
+    },
+    matrix: [
+      {
+        polarity: 'aff',
+        labelSk: 'Kladná veta (+)',
+        badge: '+',
+        formula: "Podmet + will ('ll) + V1",
+        en: "I think it will rain, so I'll take an umbrella.",
+        sk: 'Myslím, že bude pršať, tak si vezmem dáždnik.',
+        whySk: 'Predpoveď (will rain) + okamžité rozhodnutie (I’ll take = I will take).',
+      },
+      {
+        polarity: 'neg',
+        labelSk: 'Záporná veta (-)',
+        badge: '−',
+        formula: "Podmet + won't (will not) + V1",
+        en: "Don't worry, I won't tell anyone.",
+        sk: 'Neboj sa, nikomu to nepoviem.',
+        whySk: 'Sľub v zápore: won’t + 1. tvar „tell“.',
+      },
+      {
+        polarity: 'qPos',
+        labelSk: 'Pozitívna otázka (?+)',
+        badge: '?+',
+        formula: 'Will + podmet + V1?',
+        en: 'Will you help me with these boxes?',
+        sk: 'Pomôžeš mi s týmito krabicami?',
+        whySk: 'Prehodíme „Will“ pred podmet „you“, sloveso „help“ zostáva v V1.',
+      },
+      {
+        polarity: 'qNeg',
+        labelSk: 'Negatívna otázka (?−)',
+        badge: '?−',
+        formula: "Won't + podmet + V1?",
+        en: "Won't you stay a little longer?",
+        enFormal: 'Will you not stay a little longer?',
+        sk: 'Nezostaneš ešte chvíľu? (Neposadíte sa?)',
+        whySk:
+          'V budúcnosti „Won’t you...?“ znie veľmi zdvorilo ako milé pozvanie alebo udivené overenie (Napr. Won’t it be too late? = Nebude to príliš neskoro?).',
+      },
+    ],
+    shortAnswers: {
+      positiveQ: 'Will they come on time?',
+      yes: 'Yes, they will.',
+      no: "No, they won't.",
+      negativeQ: "Won't they come on time?",
+      negAnswerNoteSk:
+        'Ak PRÍDU → „Yes, they will.“ Ak NEPRÍDU → „No, they won’t.“',
+    },
+  },
+  {
+    id: 'future-going-to',
+    category: 'future',
+    titleSk: 'Budúci čas s „going to“',
+    titleEn: 'Future (be going to)',
+    subtitleSk: 'Dopredu premyslené plány, zámery a zjavné dôkazy v prítomnosti',
+    whenToUseSk: [
+      'Zámery a plány, o ktorých sme už rozhodnutí pred začiatkom rozhovoru (V lete sa chystám navštíviť Taliansko).',
+      'Predpoveď založená na tom, čo PRÁVE VIDÍME alebo cítime (Pozri na tie čierne mraky — bude pršať!).',
+    ],
+    slovakBridgeSk:
+      'Rozdiel „will“ vs „going to“: Keď sa rozhodnete AŽ TERAZ v rozhovore („Počkajte, otvorím dvere!“) → „I will open it!“ Keď ste to už PLÁNOVALI včera („Chystám sa kúpiť nové auto“) → „I am going to buy a new car.“',
+    signalWords: [
+      { en: 'this weekend', sk: 'tento víkend' },
+      { en: 'next summer', sk: 'budúce leto' },
+      { en: 'Look at those clouds!', sk: 'Pozri na tie mraky!' },
+      { en: 'soon', sk: 'čoskoro' },
+    ],
+    formingRulesSk: [
+      {
+        title: 'Vzorec: am / is / are + going to + V1',
+        points: [
+          'Časuje sa sloveso „to be“ (I am, you/we/they are, he/she/it is), „going to“ sa nemení a za ním ide vždy 1. tvar slovesa (V1).',
+          'V rýchlej hovorovej angličtine znie „going to“ často ako „gonna“ (I’m gonna go), ale v písanom texte píšeme vždy „going to“.',
+          'Tip: Ak už máte presný dátum, čas alebo kúpenú letenku, Angličania radi použijú aj priebehový prítomný čas: „I am flying to Rome tomorrow at 9.“',
+        ],
+      },
+    ],
+    commonMistakeSk: {
+      wrong: 'I going to learn English. / She is going to buys a car.',
+      right: 'I am going to learn English. / She is going to buy a car.',
+      explanationSk:
+        'Dve časté chyby: 1) nesmie chýbať „am/is/are“ pred „going to“! 2) za „to“ ide čistý neurčitok V1 bez -s.',
+    },
+    matrix: [
+      {
+        polarity: 'aff',
+        labelSk: 'Kladná veta (+)',
+        badge: '+',
+        formula: 'Podmet + am / is / are + going to + V1',
+        en: 'We are going to buy a new sofa next month.',
+        sk: 'Budúci mesiac si ideme / chystáme sa kúpiť novú pohovku.',
+        whySk: 'Už premyslený plán → are + going to + V1 (buy).',
+      },
+      {
+        polarity: 'neg',
+        labelSk: 'Záporná veta (-)',
+        badge: '−',
+        formula: "Podmet + am not / isn't / aren't + going to + V1",
+        en: "I'm not going to eat fast food anymore.",
+        sk: 'Už sa nechystám jesť fast food.',
+        whySk: 'Zápor pridáme k am/is/are → I’m not going to + V1.',
+      },
+      {
+        polarity: 'qPos',
+        labelSk: 'Pozitívna otázka (?+)',
+        badge: '?+',
+        formula: 'Am / Is / Are + podmet + going to + V1?',
+        en: 'Are you going to sell your old bike?',
+        sk: 'Ideš predať svoj starý bicykel?',
+        whySk: 'Prehodíme „Are“ pred podmet „you“.',
+      },
+      {
+        polarity: 'qNeg',
+        labelSk: 'Negatívna otázka (?−)',
+        badge: '?−',
+        formula: "Aren't / Isn't + podmet + going to + V1?",
+        en: "Aren't you going to take a coat?",
+        enFormal: 'Are you not going to take a coat?',
+        sk: 'Nevezmeš si kabát? (Ty si ho nejdeš vziať?)',
+        whySk:
+          'Keď vidíte, že kamarát odchádza do zimy bez kabáta, prekvapene sa spýtate zápornou otázkou.',
+      },
+    ],
+    shortAnswers: {
+      positiveQ: 'Is he going to study medicine?',
+      yes: 'Yes, he is.',
+      no: "No, he isn't.",
+      negativeQ: "Isn't he going to study medicine?",
+      negAnswerNoteSk:
+        'Ak BUDE študovať → „Yes, he is.“ Ak NEBUDE → „No, he isn’t.“',
+    },
+  },
+];
+
+export const QUESTION_MASTER_GUIDE = {
+  titleSk: 'Ako sa pýtať po anglicky: Pozitívna a Negatívna forma',
+  introSk:
+    'V slovenčine stačí na otázku zmeniť intonáciu hlasu („Ideš domov?“ / „Nejdeš domov?“). V angličtine sa však mení SLOVOSLED — pred podmet musí ísť vždy pomocné sloveso!',
+  goldenRules: [
+    {
+      title: '1. Pomocné sloveso pred podmet (Inverzia)',
+      descriptionSk:
+        'V prítomnom a minulom jednoduchom čase si požičiavame Do / Does / Did. Pri časoch, ktoré už pomocné sloveso majú (am/is/are, was/were, have/has, will, can), ho len presunieme na začiatok.',
+      posExample: 'Did you speak to Marek?',
+      posSk: 'Hovoril si s Marekom?',
+      negExample: "Didn't you speak to Marek?",
+      negSk: 'Nehovoril si s Marekom?',
+    },
+    {
+      title: '2. Na čo slúži negatívna (záporná) otázka (?−)?',
+      descriptionSk:
+        'Zápornou otázkou sa nepýtame len tak neutrálne — zvyčajne vyjadrujeme PREKVAPENIE („Vari nevieš?“), OVERUJEME SI súhlas („Nebolo to skvelé?“), alebo niečo ZDVOŘILO PONÚKAME („Nedáš si čaj?“).',
+      posExample: 'Do you know this song?',
+      posSk: 'Poznáš túto pieseň? (neutrálna otázka)',
+      negExample: "Don't you know this song?",
+      negSk: 'Ty túto pieseň nepoznáš?! (prekvapenie)',
+    },
+    {
+      title: '3. Hovorová vs. formálna záporná otázka',
+      descriptionSk:
+        'V bežnej reči používame skrátený tvar na začiatku (Don’t you...? Didn’t she...? Won’t they...?). V úradnom alebo veľmi dôraznom texte sa „not“ presunie až ZA podmet (Do you not...? Did she not...? Will they not...?).',
+      posExample: "Didn't he call you? (bežné)",
+      posSk: 'Nezavolal ti?',
+      negExample: 'Did he not call you? (formálne / dôrazné)',
+      negSk: 'Nezavolal vám?',
+    },
+    {
+      title: '4. Najväčšia pasca Slovákov: Odpoveď na zápornú otázku!',
+      descriptionSk:
+        'V slovenčine povieme: „Nešiel si tam? — Áno, nešiel.“ V angličtine to je CHYBA! Anglické YES vždy znamená kladnú skutočnosť (išiel som) a NO vždy znamená zápornú skutočnosť (nešiel som), bez ohľadu na to, či bola otázka kladná alebo záporná!',
+      posExample: "Didn't you go there? → Yes, I did.",
+      posSk: 'Nešiel si tam? → Ale áno, IŠIEL som!',
+      negExample: "Didn't you go there? → No, I didn't.",
+      negSk: 'Nešiel si tam? → Nie, NEŠIEL som.',
+    },
+    {
+      title: '5. WH- otázky (Why, Where, What, Who...)',
+      descriptionSk:
+        'Opytovacie slovo (Why, Where, When, How...) stojí úplne prvé a za ním ide bežná pozitívna alebo negatívna otázka. VÝNIMKA: Ak sa „Who“ alebo „What“ pýta na PODMET (Kto rozbil okno?), do/did NEPOUŽÍVAME!',
+      posExample: 'Why did you leave early? / Who broke the cup?',
+      posSk: 'Prečo si odišiel skôr? / Kto rozbil tú šálku? (podmetová bez did)',
+      negExample: "Why didn't you wait for me?",
+      negSk: 'Prečo si na mňa nepočkal?',
+    },
+  ],
+};
+
+export const GRAMMAR_QUIZ: GrammarQuizQuestion[] = [
+  {
+    id: 'gq-1',
+    category: 'past',
+    promptSk: 'Vyber správnu kladnú otázku v minulom čase:',
+    sentenceWithBlank: '____ yesterday evening?',
+    options: [
+      'Did you went home',
+      'Did you go home',
+      'Went you home',
+      'Did you gone home',
+    ],
+    correctIndex: 1,
+    fullCorrectSentence: 'Did you go home yesterday evening?',
+    translationSk: 'Išiel si včera večer domov?',
+    explanationSk:
+      'V minulej otázke s „Did“ sa hlavné sloveso VŽDY vracia do 1. tvaru („go“), nikdy nie „went“ ani „gone“.',
+  },
+  {
+    id: 'gq-2',
+    category: 'questions-pos-neg',
+    promptSk: 'Ako sa po anglicky prekvapene spýtaš zápornou otázkou: „Nehovoril si s ňou?“',
+    sentenceWithBlank: '____ to her yesterday?',
+    options: [
+      "Didn't you spoke",
+      "Don't you spoke",
+      "Didn't you speak",
+      "Not did you speak",
+    ],
+    correctIndex: 2,
+    fullCorrectSentence: "Didn't you speak to her yesterday?",
+    translationSk: 'Nehovoril si s ňou včera?',
+    explanationSk:
+      'Záporná otázka v minulom čase má na začiatku „Didn’t“ + podmet + 1. tvar slovesa „speak“.',
+  },
+  {
+    id: 'gq-3',
+    category: 'questions-pos-neg',
+    promptSk:
+      'Niekto sa ťa spýta: „Didn’t you buy the milk?“ (Nekúpil si mlieko?) — a ty si naozaj zabudol a NEKÚPIL si ho. Čo odpovieš?',
+    sentenceWithBlank: "Didn't you buy the milk? — ____, I forgot.",
+    options: [
+      'Yes, I did',
+      "Yes, I didn't",
+      "No, I didn't",
+      'No, I did',
+    ],
+    correctIndex: 2,
+    fullCorrectSentence: "Didn't you buy the milk? — No, I didn't, I forgot.",
+    translationSk: 'Nekúpil si mlieko? — Nie, nekúpil, zabudol som.',
+    explanationSk:
+      'V angličtine sa odpoveď riadi realitou faktu, nie tvarom otázky. Keďže si mlieko nekúpil (záporný fakt), povieš „No, I didn’t.“',
+  },
+  {
+    id: 'gq-4',
+    category: 'present',
+    promptSk: 'Doplň správny tvar v prítomnom jednoduchom čase (3. osoba):',
+    sentenceWithBlank: 'My brother ____ English very well.',
+    options: ['speak', 'speaks', 'is speak', 'speaking'],
+    correctIndex: 1,
+    fullCorrectSentence: 'My brother speaks English very well.',
+    translationSk: 'Môj brat hovorí veľmi dobre po anglicky.',
+    explanationSk:
+      'Trvalá schopnosť = Present Simple. „My brother“ je „he“ (3. os. j.č.), preto pridávame -s → speaks.',
+  },
+  {
+    id: 'gq-5',
+    category: 'present',
+    promptSk: 'Vyber správnu zápornú otázku v prítomnom čase:',
+    sentenceWithBlank: '____ coffee in the morning?',
+    options: [
+      "Doesn't she drinks",
+      "Don't she drink",
+      "Doesn't she drink",
+      "Isn't she drink",
+    ],
+    correctIndex: 2,
+    fullCorrectSentence: "Doesn't she drink coffee in the morning?",
+    translationSk: 'Nepije ráno kávu?',
+    explanationSk:
+      'Pre „she“ v Present Simple používame „Doesn’t“ a hlavné sloveso „drink“ zostáva bez -s.',
+  },
+  {
+    id: 'gq-6',
+    category: 'present',
+    promptSk: 'Ktorá veta vyjadruje dej prebiehajúci PRÁVE TERAZ?',
+    sentenceWithBlank: 'Be quiet, the baby ____.',
+    options: ['sleeps', 'is sleeping', 'sleeping', 'was sleep'],
+    correctIndex: 1,
+    fullCorrectSentence: 'Be quiet, the baby is sleeping.',
+    translationSk: 'Buď ticho, bábätko práve spí.',
+    explanationSk:
+      'Dej v tomto okamihu tvoríme prítomným priebehovým časom: is + sloveso-ing → is sleeping.',
+  },
+  {
+    id: 'gq-7',
+    category: 'future',
+    promptSk: 'Telefón práve začal zvoniť a ty sa hneď teraz rozhodneš, že ho zdvihneš:',
+    sentenceWithBlank: 'Wait a second, I ____ answer it!',
+    options: ['am going', 'will', 'wills', 'did'],
+    correctIndex: 1,
+    fullCorrectSentence: 'Wait a second, I will answer it!',
+    translationSk: 'Počkaj sekundu, zdvihnem to!',
+    explanationSk:
+      'Na spontánne rozhodnutia v sekunde reči používame „will“ (alebo I’ll).',
+  },
+  {
+    id: 'gq-8',
+    category: 'future',
+    promptSk: 'Už minulý týždeň ste si kúpili lístky do Prahy a máte jasný plán:',
+    sentenceWithBlank: 'We ____ visit Prague this weekend.',
+    options: [
+      'are going to',
+      'going to',
+      'will going to',
+      'go to',
+    ],
+    correctIndex: 0,
+    fullCorrectSentence: 'We are going to visit Prague this weekend.',
+    translationSk: 'Tento víkend sa chystáme navštíviť Prahu.',
+    explanationSk:
+      'Vopred premyslený plán vyjadrujeme pomocou „am/is/are + going to + V1“.',
+  },
+  {
+    id: 'gq-9',
+    category: 'questions-pos-neg',
+    promptSk: 'Vyber správnu zápornú otázku v budúcom čase:',
+    sentenceWithBlank: '____ us at the station tomorrow?',
+    options: [
+      "Won't you meet",
+      "Don't you will meet",
+      "Willn't you meet",
+      "Want you meet",
+    ],
+    correctIndex: 0,
+    fullCorrectSentence: "Won't you meet us at the station tomorrow?",
+    translationSk: 'Nestretneš sa s nami zajtra na stanici?',
+    explanationSk:
+      'Záporný tvar od „will“ je „won’t“ [wount]. V zápornej otázke ide na začiatok: Won’t + podmet + V1.',
+  },
+  {
+    id: 'gq-10',
+    category: 'past',
+    promptSk: 'Doplň správny tvar v predprítomnom čase (skúsenosť dodnes):',
+    sentenceWithBlank: 'Have you ever ____ such a delicious cake?',
+    options: ['eat', 'ate', 'eaten', 'eating'],
+    correctIndex: 2,
+    fullCorrectSentence: 'Have you ever eaten such a delicious cake?',
+    translationSk: 'Jedol si niekedy taký chutný koláč?',
+    explanationSk:
+      'V predprítomnom čase po Have/Has ide VŽDY 3. tvar nepravidelného slovesa (V3) → eaten.',
+  },
+  {
+    id: 'gq-11',
+    category: 'past',
+    promptSk: 'Vyber správny tvar slovesa v prítomnosti aj minulosti so slovom „yesterday“:',
+    sentenceWithBlank: 'She ____ two letters yesterday and ____ them immediately.',
+    options: [
+      'write / send',
+      'wrote / sent',
+      'written / sent',
+      'wroted / sended',
+    ],
+    correctIndex: 1,
+    fullCorrectSentence: 'She wrote two letters yesterday and sent them immediately.',
+    translationSk: 'Včera napísala dva listy a hneď ich poslala.',
+    explanationSk:
+      '„Yesterday“ vyžaduje Past Simple (V2) v kladnej oznamovacej vete: write → wrote, send → sent.',
+  },
+  {
+    id: 'gq-12',
+    category: 'questions-pos-neg',
+    promptSk: 'Ako sa povie formálna (neskrátená) záporná otázka v minulom čase?',
+    sentenceWithBlank: '____ the instructions carefully?',
+    options: [
+      'Did not you read',
+      'Did you not read',
+      'Did you read not',
+      'Not did you read',
+    ],
+    correctIndex: 1,
+    fullCorrectSentence: 'Did you not read the instructions carefully?',
+    translationSk: 'Neprečítal ste si návod pozorne?',
+    explanationSk:
+      'V neskrátenej (formálnej) zápornej otázke stojí „not“ až ZA podmetom: Did + podmet + not + V1.',
+  },
+  {
+    id: 'gq-13',
+    category: 'questions-pos-neg',
+    promptSk: 'Otázka na podmet („Kto napísal tento e-mail?“):',
+    sentenceWithBlank: '____ this email?',
+    options: [
+      'Who did write',
+      'Who wrote',
+      'Who did wrote',
+      'Who was write',
+    ],
+    correctIndex: 1,
+    fullCorrectSentence: 'Who wrote this email?',
+    translationSk: 'Kto napísal tento e-mail?',
+    explanationSk:
+      'Keď sa opytovacie slovo „Who“ pýta na samotného konateľa (podmet), pomocné „did“ sa NEPOUŽÍVA a sloveso ide priamo do 2. tvaru „wrote“.',
+  },
+  {
+    id: 'gq-14',
+    category: 'past',
+    promptSk: 'Doplň správny tvar slovesa „byť“ v zápornej otázke v minulosti:',
+    sentenceWithBlank: '____ at the concert on Friday?',
+    options: [
+      "Didn't you be",
+      "Wasn't you",
+      "Weren't you",
+      "Don't you were",
+    ],
+    correctIndex: 2,
+    fullCorrectSentence: "Weren't you at the concert on Friday?",
+    translationSk: 'Nebol si v piatok na tom koncerte?',
+    explanationSk:
+      'Sloveso „be“ nepoužíva „did“! Pre podmet „you“ v minulosti používame „were“, v zápornej otázke „Weren’t you...?“.',
+  },
+  {
+    id: 'gq-15',
+    category: 'past',
+    promptSk: 'Kombinácia dlhšieho deja a náhleho prerušenia v minulosti:',
+    sentenceWithBlank: 'While I ____ to work, I ____ my old teacher.',
+    options: [
+      'walked / was seeing',
+      'was walking / saw',
+      'walking / saw',
+      'was walk / seen',
+    ],
+    correctIndex: 1,
+    fullCorrectSentence: 'While I was walking to work, I saw my old teacher.',
+    translationSk: 'Zatiaľ čo som kráčal do práce, uvidel som svojho starého učiteľa.',
+    explanationSk:
+      'Dlhší dej na pozadí (kráčanie) = Past Continuous (was walking); krátka udalosť = Past Simple V2 (saw).',
+  },
+  {
+    id: 'gq-16',
+    category: 'questions-pos-neg',
+    promptSk: 'Záporná otázka s opytovacím slovom „Prečo“ v budúcom čase:',
+    sentenceWithBlank: 'Why ____ tell him the truth tomorrow?',
+    options: [
+      "you won't",
+      "won't you",
+      "don't you will",
+      "aren't you will",
+    ],
+    correctIndex: 1,
+    fullCorrectSentence: "Why won't you tell him the truth tomorrow?",
+    translationSk: 'Prečo mu zajtra nepovieš pravdu?',
+    explanationSk:
+      'Za WH-slovom (Why) nasleduje inverzia pomocného slovesa a podmetu: Why + won’t + you + V1.',
+  },
+];

@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="sk">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#ffffff" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <title>Angličtina — Nepravidelné slovesá, časy a otázky</title>
+    <meta
+      name="description"
+      content="Responzívna aplikácia na precvičovanie anglických nepravidelných slovies vo všetkých tvaroch, prítomného, minulého a budúceho času a pozitívneho aj negatívneho opytovania s vysvetlením v slovenčine a zvukovými ukážkami."
+    />
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <script>
+      // Set theme before first paint to avoid a white flash in dark mode
+      try {
+        var t = localStorage.getItem('anglictina_theme_v1');
+        if (t !== 'dark' && t !== 'light') {
+          t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+        document.documentElement.setAttribute('data-theme', t);
+      } catch (e) {}
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
