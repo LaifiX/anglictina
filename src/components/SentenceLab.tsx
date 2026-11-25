@@ -1,7 +1,7 @@
 import { Columns2, Sparkles } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { TENSE_GUIDES } from '../data/grammarData';
-import type { Accent, SentencePolarity, SpeechRate, TenseGuide } from '../types/english';
+import type { Accent, SentencePolarity, SpeechRate, TenseId } from '../types/english';
 import {
   BUILDER_SUBJECTS,
   BUILDER_VERBS,
@@ -15,6 +15,7 @@ import { AudioButton } from './AudioButton';
 interface SentenceLabProps {
   accent: Accent;
   rate: SpeechRate;
+  initialTenseId?: TenseId;
 }
 
 const POLARITY_LABELS: { id: SentencePolarity; badge: string; label: string }[] = [
@@ -24,13 +25,21 @@ const POLARITY_LABELS: { id: SentencePolarity; badge: string; label: string }[] 
   { id: 'qNeg', badge: '?−', label: 'Negatívna otázka' },
 ];
 
-export function SentenceLab({ accent, rate }: SentenceLabProps) {
-  const [tenseId, setTenseId] = useState<TenseGuide['id']>('past-simple');
+export function SentenceLab({
+  accent,
+  rate,
+  initialTenseId = 'past-simple',
+}: SentenceLabProps) {
+  const [tenseId, setTenseId] = useState<TenseId>(initialTenseId);
   const [subject, setSubject] = useState<BuilderSubject>('you');
   const [verbId, setVerbId] = useState<string>('go');
   const [polarity, setPolarity] = useState<SentencePolarity>('qNeg');
   const [whWord, setWhWord] = useState<BuilderWhWord>('');
   const [compareAll, setCompareAll] = useState(true);
+
+  useEffect(() => {
+    setTenseId(initialTenseId);
+  }, [initialTenseId]);
 
   const selectedVerb = BUILDER_VERBS.find((v) => v.id === verbId) ?? BUILDER_VERBS[0];
   const isQuestion = polarity === 'qPos' || polarity === 'qNeg';
@@ -45,11 +54,20 @@ export function SentenceLab({ accent, rate }: SentenceLabProps) {
 
   return (
     <section className="builder-card">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
+          gap: '0.75rem',
+          flexWrap: 'wrap',
+          marginBottom: '1rem',
+        }}
+      >
         <div>
           <div className="builder-eyebrow">
             <Sparkles size={15} />
-            <span>Interaktívne laboratórium viet a opytovania</span>
+            <span>Interaktívne laboratórium viet (všetkých 9 časov)</span>
           </div>
           <h3 className="tense-title">
             Vyskúšaj si tvorbu času, kladnej aj zápornej otázky naživo
@@ -76,11 +94,11 @@ export function SentenceLab({ accent, rate }: SentenceLabProps) {
             className="select-input"
             style={{ width: '100%' }}
             value={tenseId}
-            onChange={(e) => setTenseId(e.target.value as TenseGuide['id'])}
+            onChange={(e) => setTenseId(e.target.value as TenseId)}
           >
             {TENSE_GUIDES.map((t) => (
               <option key={t.id} value={t.id}>
-                {t.titleSk} ({t.titleEn})
+                {t.order}. {t.titleSk} ({t.titleEn})
               </option>
             ))}
           </select>
@@ -160,7 +178,15 @@ export function SentenceLab({ accent, rate }: SentenceLabProps) {
       </div>
 
       <div className="sentence-stage">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.75rem', flexWrap: 'wrap' }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'flex-start',
+            gap: '0.75rem',
+            flexWrap: 'wrap',
+          }}
+        >
           <div className="token-row">
             {result.tokens.map((tok, index) => (
               <div key={`${tok.text}-${index}`} className={`token-chip ${tok.role}`}>
@@ -178,16 +204,39 @@ export function SentenceLab({ accent, rate }: SentenceLabProps) {
           />
         </div>
 
-        <div style={{ fontSize: '1.08rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '0.35rem' }}>
+        <div
+          style={{
+            fontSize: '1.08rem',
+            fontWeight: 700,
+            color: 'var(--text-main)',
+            marginBottom: '0.35rem',
+          }}
+        >
           <span className="lang-tag">SK</span> {result.slovak}
         </div>
 
         {result.formalEnglish && (
-          <div style={{ fontSize: '0.86rem', color: 'var(--text-secondary)', marginBottom: '0.45rem', display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+          <div
+            style={{
+              fontSize: '0.86rem',
+              color: 'var(--text-secondary)',
+              marginBottom: '0.45rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              flexWrap: 'wrap',
+            }}
+          >
             <span>
               Formálny / neskrátený tvar: <strong>{result.formalEnglish}</strong>
             </span>
-            <AudioButton text={result.formalEnglish} accent={accent} rate={rate} iconOnly title="Prehrať formálny tvar" />
+            <AudioButton
+              text={result.formalEnglish}
+              accent={accent}
+              rate={rate}
+              iconOnly
+              title="Prehrať formálny tvar"
+            />
           </div>
         )}
 
@@ -196,7 +245,10 @@ export function SentenceLab({ accent, rate }: SentenceLabProps) {
         </p>
 
         {result.noteSk && (
-          <div className="callout-tip" style={{ marginTop: '0.7rem', padding: '0.6rem 0.85rem', fontSize: '0.84rem' }}>
+          <div
+            className="callout-tip"
+            style={{ marginTop: '0.7rem', padding: '0.6rem 0.85rem', fontSize: '0.84rem' }}
+          >
             {result.noteSk}
           </div>
         )}
@@ -221,7 +273,9 @@ export function SentenceLab({ accent, rate }: SentenceLabProps) {
                   <AudioButton text={row.english} accent={accent} rate={rate} iconOnly />
                 </div>
                 <div className="matrix-en">{row.english}</div>
-                <div style={{ fontSize: '0.86rem', color: 'var(--text-secondary)' }}>{row.slovak}</div>
+                <div style={{ fontSize: '0.86rem', color: 'var(--text-secondary)' }}>
+                  {row.slovak}
+                </div>
               </div>
             );
           })}

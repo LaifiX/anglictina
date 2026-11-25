@@ -1,9 +1,22 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import App from '../App';
-import { GRAMMAR_QUIZ, TENSE_GUIDES } from '../data/grammarData';
+import {
+  GRAMMAR_QUIZ,
+  TENSE_COMBO_PRESETS,
+  TENSE_GUIDES,
+  TENSE_ORDER,
+} from '../data/grammarData';
 import { IRREGULAR_VERBS } from '../data/irregularVerbs';
+import { ALL_TENSE_EXERCISES, EXERCISES_BY_TENSE } from '../data/tenses';
 import { BUILDER_VERBS, buildInteractiveSentence } from '../utils/sentenceBuilder';
+import {
+  buildChoiceOptions,
+  fillSentenceBlank,
+  getTenseMastery,
+  isTenseAnswerCorrect,
+  selectTenseRound,
+} from '../utils/tenseCheck';
 import {
   generateVerbFormChoices,
   isVerbFormAnswerCorrect,
@@ -36,13 +49,126 @@ describe('Irregular Verbs Dataset Integrity', () => {
     }
   });
 
-  it('includes complete tense guides and grammar quiz questions', () => {
-    expect(TENSE_GUIDES.length).toBe(7);
+  it('includes 9 ordered tense guides, combo presets, and legacy quiz integrity', () => {
+    expect(TENSE_GUIDES.length).toBe(9);
+    expect(TENSE_GUIDES.map((g) => g.order)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+    expect(TENSE_GUIDES.map((g) => g.id)).toEqual(TENSE_ORDER);
     for (const guide of TENSE_GUIDES) {
       expect(guide.matrix).toHaveLength(4);
       expect(guide.matrix.map((m) => m.polarity)).toEqual(['aff', 'neg', 'qPos', 'qNeg']);
+      expect(guide.formulaQuick.length).toBeGreaterThan(3);
+      expect(guide.timelineCaptionSk.length).toBeGreaterThan(10);
     }
+    expect(TENSE_COMBO_PRESETS.length).toBeGreaterThanOrEqual(8);
     expect(GRAMMAR_QUIZ.length).toBeGreaterThanOrEqual(16);
+  });
+});
+
+describe('900 Tense Exercises Bank Integrity', () => {
+  it('contains exactly 100 valid unique exercises per tense (900 total) with all 4 polarities', () => {
+    expect(ALL_TENSE_EXERCISES.length).toBe(900);
+
+    const seenIds = new Set<string>();
+    const seenSentences = new Set<string>();
+
+    for (const tenseId of TENSE_ORDER) {
+      const bank = EXERCISES_BY_TENSE[tenseId];
+      expect(bank.length, `Expected 100 exercises for ${tenseId}`).toBe(100);
+
+      const polarityCounts = { aff: 0, neg: 0, qPos: 0, qNeg: 0 };
+
+      for (const ex of bank) {
+        expect(ex.tenseId).toBe(tenseId);
+        expect(seenIds.has(ex.id), `Duplicate ID: ${ex.id}`).toBe(false);
+        seenIds.add(ex.id);
+
+        const sentenceKey = `${ex.sentenceWithBlank.toLowerCase()}||${ex.verbCue.toLowerCase()}`;
+        expect(seenSentences.has(sentenceKey), `Duplicate sentence: ${ex.id} -> ${ex.sentenceWithBlank}`).toBe(false);
+        seenSentences.add(sentenceKey);
+
+        // Exactly one ____ blank
+        const blankMatches = ex.sentenceWithBlank.match(/____/g) ?? [];
+        expect(blankMatches.length, `Bad blank count in ${ex.id}`).toBe(1);
+
+        // Clean fields, no draft notes
+        expect(ex.verbCue.trim().length).toBeGreaterThan(0);
+        expect(ex.answer.trim().length).toBeGreaterThan(0);
+        expect(ex.translationSk.trim().length).toBeGreaterThan(5);
+        expect(ex.explanationSk.trim().length).toBeGreaterThan(10);
+        expect(ex.explanationSk).not.toMatch(/Opravíme|Upravíme|Počkaj —/i);
+
+        // 4 unique options (answer + 3 distractors)
+        const allOptions = [ex.answer, ...ex.distractors];
+        expect(allOptions).toHaveLength(4);
+        const normOptions = new Set(allOptions.map((o) => o.trim().toLowerCase()));
+        expect(normOptions.size, `Duplicate options in ${ex.id}: ${allOptions.join(', ')}`).toBe(4);
+
+        // Filled sentence has no leftover blank
+        const filled = fillSentenceBlank(ex.sentenceWithBlank, ex.answer);
+        expect(filled).not.toContain('____');
+
+        // Choice builder returns all 4 options
+        const shuffled = buildChoiceOptions(ex, 1);
+        expect(shuffled).toHaveLength(4);
+        expect(shuffled).toContain(ex.answer);
+
+        polarityCounts[ex.polarity] += 1;
+      }
+
+      expect(polarityCounts.aff).toBeGreaterThanOrEqual(30);
+      expect(polarityCounts.neg).toBeGreaterThanOrEqual(20);
+      expect(polarityCounts.qPos).toBeGreaterThanOrEqual(20);
+      expect(polarityCounts.qNeg).toBeGreaterThanOrEqual(10);
+    }
+  });
+});
+
+describe('Tense Answer Checker & Adaptive Selection', () => {
+  it('accepts contractions, expanded forms, curly apostrophes, and formal negative questions', () => {
+    const pastNeg = EXERCISES_BY_TENSE['past-simple'].find((e) => e.polarity === 'neg')!;
+    expect(isTenseAnswerCorrect(pastNeg, pastNeg.answer)).toBe(true);
+    expect(isTenseAnswerCorrect(pastNeg, pastNeg.answer.replace("didn't", 'did not'))).toBe(true);
+    expect(isTenseAnswerCorrect(pastNeg, pastNeg.answer.replace("'", '’').toUpperCase())).toBe(true);
+
+    const pastNegQ = EXERCISES_BY_TENSE['past-simple'].find((e) => e.answer === "Didn't you get")!;
+    expect(isTenseAnswerCorrect(pastNegQ, "didn't you get")).toBe(true);
+    expect(isTenseAnswerCorrect(pastNegQ, 'Did you not get')).toBe(true);
+    expect(isTenseAnswerCorrect(pastNegQ, "Didn't you got")).toBe(false);
+
+    const futNeg = EXERCISES_BY_TENSE['future-will'].find((e) => e.answer === "won't tell")!;
+    expect(isTenseAnswerCorrect(futNeg, 'will not tell')).toBe(true);
+    expect(isTenseAnswerCorrect(futNeg, "won't tell")).toBe(true);
+
+    const ppAff = EXERCISES_BY_TENSE['present-perfect'].find((e) => e.answer === 'have lost')!;
+    expect(isTenseAnswerCorrect(ppAff, "'ve lost")).toBe(true);
+    expect(isTenseAnswerCorrect(ppAff, 'have lost')).toBe(true);
+  });
+
+  it('stratifies multi-tense selection across all 9 tenses and prioritizes missed/unseen items', () => {
+    const mix = selectTenseRound({
+      pool: ALL_TENSE_EXERCISES,
+      count: 27,
+      progress: {},
+      prioritizeSmart: true,
+      selectedTenses: TENSE_ORDER,
+    });
+    expect(mix).toHaveLength(27);
+    const countsByTense = new Map<string, number>();
+    for (const ex of mix) {
+      countsByTense.set(ex.tenseId, (countsByTense.get(ex.tenseId) ?? 0) + 1);
+    }
+    for (const tid of TENSE_ORDER) {
+      expect(countsByTense.get(tid)).toBe(3);
+    }
+
+    const mastery = getTenseMastery('present-simple', ALL_TENSE_EXERCISES, {
+      'ps-001': { attempts: 1, correct: 1, lastCorrect: true, lastPracticedAt: Date.now() },
+      'ps-002': { attempts: 1, correct: 0, lastCorrect: false, lastPracticedAt: Date.now() },
+    });
+    expect(mastery.total).toBe(100);
+    expect(mastery.mastered).toBe(1);
+    expect(mastery.mistakes).toBe(1);
+    expect(mastery.status).toBe('in-progress');
   });
 });
 
@@ -71,9 +197,10 @@ describe('Verb Answer Validation Helpers', () => {
   });
 });
 
-describe('Interactive Sentence & Question Builder', () => {
+describe('Interactive Sentence & Question Builder (All 9 Tenses)', () => {
   const goPreset = BUILDER_VERBS.find((v) => v.id === 'go')!;
   const bePreset = BUILDER_VERBS.find((v) => v.id === 'be')!;
+  const writePreset = BUILDER_VERBS.find((v) => v.id === 'write')!;
 
   it('builds positive and negative questions in Past Simple returning V2 back to V1', () => {
     const aff = buildInteractiveSentence({
@@ -104,7 +231,7 @@ describe('Interactive Sentence & Question Builder', () => {
     expect(qNeg.slovak).toContain('Prečo');
   });
 
-  it('handles special "to be" rules in Present and Past negative questions', () => {
+  it('handles special "to be" rules and continuous fallback cleanly', () => {
     const presentNegI = buildInteractiveSentence({
       tenseId: 'present-simple',
       subject: 'I',
@@ -121,10 +248,18 @@ describe('Interactive Sentence & Question Builder', () => {
       polarity: 'qNeg',
     });
     expect(pastNegYou.english).toBe("Weren't you at home?");
+
+    const ppcBe = buildInteractiveSentence({
+      tenseId: 'present-perfect-continuous',
+      subject: 'he',
+      verb: bePreset,
+      polarity: 'aff',
+    });
+    expect(ppcBe.english).toBe('He has been at home.');
+    expect(ppcBe.noteSk).toBeTruthy();
   });
 
-  it('uses V3 in Present Perfect and V1 in Future will', () => {
-    const writePreset = BUILDER_VERBS.find((v) => v.id === 'write')!;
+  it('builds Present Perfect, Present Perfect Continuous, Past Perfect, and Future will', () => {
     const perfectQNeg = buildInteractiveSentence({
       tenseId: 'present-perfect',
       subject: 'he',
@@ -132,6 +267,31 @@ describe('Interactive Sentence & Question Builder', () => {
       polarity: 'qNeg',
     });
     expect(perfectQNeg.english).toBe("Hasn't he written an email?");
+
+    const ppcQPos = buildInteractiveSentence({
+      tenseId: 'present-perfect-continuous',
+      subject: 'she',
+      verb: writePreset,
+      polarity: 'qPos',
+    });
+    expect(ppcQPos.english).toBe('Has she been writing an email?');
+
+    const pastPerfNeg = buildInteractiveSentence({
+      tenseId: 'past-perfect',
+      subject: 'they',
+      verb: writePreset,
+      polarity: 'neg',
+    });
+    expect(pastPerfNeg.english).toBe("They hadn't written an email.");
+
+    const pastPerfQNeg = buildInteractiveSentence({
+      tenseId: 'past-perfect',
+      subject: 'you',
+      verb: writePreset,
+      polarity: 'qNeg',
+    });
+    expect(pastPerfQNeg.english).toBe("Hadn't you written an email?");
+    expect(pastPerfQNeg.formalEnglish).toBe('Had you not written an email?');
 
     const futureQNeg = buildInteractiveSentence({
       tenseId: 'future-will',
@@ -159,7 +319,9 @@ describe('App UI Integration', () => {
     expect(screen.getByText('written')).toBeInTheDocument();
 
     fireEvent.click(screen.getAllByRole('button', { name: /Vysvetlenie a vety/i })[0]);
-    expect(screen.getByText(/Ako sa toto sloveso vysvetľuje a používa v slovenčine/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Ako sa toto sloveso vysvetľuje a používa v slovenčine/i)
+    ).toBeInTheDocument();
     expect(screen.getByText(/Ukážky použitia vo vetách/i)).toBeInTheDocument();
   });
 
@@ -178,15 +340,39 @@ describe('App UI Integration', () => {
     expect(screen.getByText(/Vysvetlenie po slovensky:/i)).toBeInTheDocument();
   });
 
-  it('renders Grammar & Questions Lab and Grammar Quiz cleanly', () => {
+  it('navigates 9-step Tenses Course, Sentence Lab, and runs Tense Test Studio cleanly', () => {
     render(<App />);
-    fireEvent.click(screen.getByRole('tab', { name: /Časy a otázky/i }));
-    expect(screen.getByText(/Vyskúšaj si tvorbu času, kladnej aj zápornej otázky naživo/i)).toBeInTheDocument();
-    expect(screen.getAllByText("Didn't you go to work?").length).toBeGreaterThan(0);
+    fireEvent.click(screen.getByRole('tab', { name: /Kurz časov/i }));
+    expect(screen.getByText(/Kurz anglických časov krok za krokom/i)).toBeInTheDocument();
+    expect(screen.getByText(/Prítomný jednoduchý čas/i)).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('tab', { name: /Kvíz z časov/i }));
-    expect(screen.getByText(/Kvíz: Tvorba časov a opytovanie/i)).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Did you go home' }));
-    expect(screen.getByText('Did you go home yesterday evening?')).toBeInTheDocument();
+    // Jump to Step 9 (Past Perfect)
+    fireEvent.click(screen.getByRole('button', { name: /Predminulý čas/i }));
+    expect(screen.getByText(/Predminulý čas \(minulosť pred minulosťou\)/i)).toBeInTheDocument();
+
+    // Open Sentence Lab inside Tenses Course
+    fireEvent.click(screen.getByRole('tab', { name: /Laboratórium viet/i }));
+    expect(
+      screen.getByText(/Vyskúšaj si tvorbu času, kladnej aj zápornej otázky naživo/i)
+    ).toBeInTheDocument();
+
+    // Switch to Test Studio, choose Final Mix (all 9 tenses), 10 questions, and start
+    fireEvent.click(screen.getByRole('tab', { name: /Testy z časov/i }));
+    expect(screen.getByText(/Testy z anglických časov \(900 príkladov\)/i)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('tab', { name: /4\. Finálny mix/i }));
+    fireEvent.click(screen.getByRole('button', { name: /^10$/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Spustiť test \(10 úloh\)/i }));
+
+    expect(screen.getByText(/Úloha 1 z 10/i)).toBeInTheDocument();
+    expect(screen.getByText(/Zmiešané časy/i)).toBeInTheDocument();
+
+    // Answer the first multiple choice question
+    const choiceBtns = document.querySelectorAll('.choice-btn');
+    expect(choiceBtns.length).toBe(4);
+    fireEvent.click(choiceBtns[0]);
+
+    expect(screen.getByText(/Vysvetlenie:/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Ďalšia úloha/i })).toBeInTheDocument();
   });
 });

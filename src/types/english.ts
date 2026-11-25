@@ -86,6 +86,17 @@ export interface VerbProgressRecord {
 
 export type ProgressMap = Record<string, VerbProgressRecord>;
 
+export type TenseId =
+  | 'present-simple'
+  | 'present-continuous'
+  | 'past-simple'
+  | 'past-continuous'
+  | 'future-will'
+  | 'future-going-to'
+  | 'present-perfect'
+  | 'present-perfect-continuous'
+  | 'past-perfect';
+
 export type TenseCategory = 'present' | 'past' | 'future' | 'questions';
 
 export type SentencePolarity = 'aff' | 'neg' | 'qPos' | 'qNeg';
@@ -101,19 +112,32 @@ export interface TenseSentenceRow {
   whySk: string;
 }
 
+export interface TenseContrast {
+  otherTenseId: TenseId;
+  titleSk: string;
+  summarySk: string;
+  pairs: {
+    leftLabel: string;
+    leftEn: string;
+    leftSk: string;
+    rightLabel: string;
+    rightEn: string;
+    rightSk: string;
+    differenceSk: string;
+  }[];
+}
+
 export interface TenseGuide {
-  id:
-    | 'present-simple'
-    | 'present-continuous'
-    | 'past-simple'
-    | 'past-continuous'
-    | 'present-perfect'
-    | 'future-will'
-    | 'future-going-to';
+  id: TenseId;
+  order: number;
+  level: string;
+  shortTitleSk: string;
   category: 'present' | 'past' | 'future';
   titleSk: string;
   titleEn: string;
   subtitleSk: string;
+  formulaQuick: string;
+  timelineCaptionSk: string;
   whenToUseSk: string[];
   slovakBridgeSk: string;
   signalWords: { en: string; sk: string }[];
@@ -134,6 +158,56 @@ export interface TenseGuide {
     negativeQ: string;
     negAnswerNoteSk: string;
   };
+  contrast?: TenseContrast;
+  recommendedComboId?: string;
+}
+
+export interface TenseExercise {
+  id: string;
+  tenseId: TenseId;
+  polarity: SentencePolarity;
+  sentenceWithBlank: string;
+  /** Cue shown for typing mode and clarity, e.g. "(go)" or "(not / buy)" or "(you / see)" */
+  verbCue: string;
+  answer: string;
+  /** Additional accepted typed answers beyond automatic contraction expansion */
+  acceptedExtras?: string[];
+  /** Exactly 3 plausible wrong options */
+  distractors: [string, string, string];
+  translationSk: string;
+  explanationSk: string;
+}
+
+export type TenseAnswerMode = 'choice' | 'type' | 'mixed';
+export type TensePolarityFilter = 'all' | 'aff' | 'neg' | 'questions' | 'qNeg';
+
+export interface TenseComboPreset {
+  id: string;
+  stepTag: string;
+  level: string;
+  titleSk: string;
+  subtitleSk: string;
+  tenses: TenseId[];
+  whyPracticeSk: string;
+}
+
+export interface TenseExerciseRecord {
+  attempts: number;
+  correct: number;
+  lastCorrect: boolean;
+  lastPracticedAt: number;
+}
+
+export type TenseProgressMap = Record<string, TenseExerciseRecord>;
+
+export interface TenseQuizLaunchRequest {
+  mode: 'single' | 'combo' | 'custom' | 'all' | 'mistakes';
+  tenses: TenseId[];
+  comboId?: string;
+  answerMode?: TenseAnswerMode;
+  roundSize?: number;
+  autoStart?: boolean;
+  nonce: number;
 }
 
 export interface GrammarQuizQuestion {

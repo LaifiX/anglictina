@@ -1,4 +1,4 @@
-import type { SentencePolarity, TenseGuide } from '../types/english';
+import type { SentencePolarity, TenseId } from '../types/english';
 
 export type BuilderSubject = 'I' | 'you' | 'he' | 'she' | 'we' | 'they';
 export type BuilderWhWord = '' | 'Why' | 'Where' | 'When';
@@ -240,7 +240,7 @@ export interface BuiltSentenceResult {
 }
 
 export function buildInteractiveSentence(params: {
-  tenseId: TenseGuide['id'];
+  tenseId: TenseId;
   subject: BuilderSubject;
   verb: BuilderVerbPreset;
   polarity: SentencePolarity;
@@ -257,17 +257,17 @@ export function buildInteractiveSentence(params: {
   let explanationSk = '';
   let noteSk: string | undefined;
 
-  // Handle "be" in continuous tenses gracefully (English avoids "am being at home")
-  const effectiveTense: TenseGuide['id'] =
-    verb.id === 'be' && (tenseId === 'present-continuous' || tenseId === 'past-continuous')
-      ? tenseId === 'present-continuous'
-        ? 'present-simple'
-        : 'past-simple'
-      : tenseId;
+  // Handle "be" in continuous tenses gracefully (English avoids "am being / have been being at home")
+  let effectiveTense: TenseId = tenseId;
+  if (verb.id === 'be') {
+    if (tenseId === 'present-continuous') effectiveTense = 'present-simple';
+    else if (tenseId === 'past-continuous') effectiveTense = 'past-simple';
+    else if (tenseId === 'present-perfect-continuous') effectiveTense = 'present-perfect';
+  }
 
   if (verb.id === 'be' && effectiveTense !== tenseId) {
     noteSk =
-      'Sloveso „to be“ vo význame miesta alebo stavu („byť doma“) v angličtine netvorí priebehový čas (-ing), preto tu ukazujeme jednoduchý tvar.';
+      'Sloveso „to be“ vo význame miesta alebo stavu („byť doma“) v angličtine netvorí priebehový čas (-ing), preto tu ukazujeme zodpovedajúci jednoduchý tvar.';
   }
 
   const pushWh = () => {
@@ -297,7 +297,7 @@ export function buildInteractiveSentence(params: {
         ? "wasn't"
         : "weren't"
       : subject === 'I'
-        ? "aren't" // used for Aren't I?
+        ? "aren't"
         : beForm === 'is'
           ? "isn't"
           : "aren't";
@@ -347,7 +347,7 @@ export function buildInteractiveSentence(params: {
     }
     pushPunct();
   } else {
-    // --- STANDARD VERBS ACROSS ALL 7 TENSES ---
+    // --- STANDARD VERBS ACROSS ALL 9 TENSES ---
     switch (effectiveTense) {
       case 'present-simple': {
         const auxPos = isThirdSg ? 'does' : 'do';
@@ -542,6 +542,78 @@ export function buildInteractiveSentence(params: {
         break;
       }
 
+      case 'present-perfect-continuous': {
+        const aux = isThirdSg ? 'has' : 'have';
+        const auxNeg = isThirdSg ? "hasn't" : "haven't";
+        if (polarity === 'aff') {
+          tokens.push({ text: subjDisplay(subject, true), role: 'subject', labelSk: 'Podmet' });
+          tokens.push({ text: aux, role: 'aux', labelSk: 'Pomocné have/has' });
+          tokens.push({ text: 'been', role: 'aux', labelSk: '3. tvar be (been)' });
+          tokens.push({ text: verb.ingForm, role: 'verb', labelSk: 'Tvar s -ing' });
+          tokens.push({ text: verb.complementEn, role: 'rest', labelSk: 'Predmet / doplnok' });
+          explanationSk = `Predprítomný priebehový čas zdôrazňuje trvanie deja až doteraz: „${aux} been“ + „${verb.ingForm}“.`;
+        } else if (polarity === 'neg') {
+          tokens.push({ text: subjDisplay(subject, true), role: 'subject', labelSk: 'Podmet' });
+          tokens.push({ text: auxNeg, role: 'neg', labelSk: 'Záporné have/has' });
+          tokens.push({ text: 'been', role: 'aux', labelSk: 'been' });
+          tokens.push({ text: verb.ingForm, role: 'verb', labelSk: 'Tvar s -ing' });
+          tokens.push({ text: verb.complementEn, role: 'rest', labelSk: 'Predmet / doplnok' });
+          explanationSk = `V zápore pridáme not k have/has → „${auxNeg} been ${verb.ingForm}“.`;
+        } else if (polarity === 'qPos') {
+          pushWh();
+          tokens.push({ text: effectiveWh ? aux : capFirst(aux), role: 'aux', labelSk: 'Pomocné have/has' });
+          tokens.push({ text: subjDisplay(subject, false), role: 'subject', labelSk: 'Podmet' });
+          tokens.push({ text: 'been', role: 'aux', labelSk: 'been' });
+          tokens.push({ text: verb.ingForm, role: 'verb', labelSk: 'Tvar s -ing' });
+          tokens.push({ text: verb.complementEn, role: 'rest', labelSk: 'Predmet / doplnok' });
+          explanationSk = `Pred podmet ide iba „${aux}“; „been ${verb.ingForm}“ zostáva za podmetom.`;
+        } else {
+          pushWh();
+          tokens.push({ text: effectiveWh ? auxNeg : capFirst(auxNeg), role: 'neg', labelSk: 'Záporné have/has' });
+          tokens.push({ text: subjDisplay(subject, false), role: 'subject', labelSk: 'Podmet' });
+          tokens.push({ text: 'been', role: 'aux', labelSk: 'been' });
+          tokens.push({ text: verb.ingForm, role: 'verb', labelSk: 'Tvar s -ing' });
+          tokens.push({ text: verb.complementEn, role: 'rest', labelSk: 'Predmet / doplnok' });
+          const fLead = effectiveWh ? `${effectiveWh} ${aux}` : capFirst(aux);
+          formalEnglish = `${fLead} ${subjDisplay(subject, false)} not been ${verb.ingForm} ${verb.complementEn}?`;
+          explanationSk = `Záporná otázka: „${auxNeg}“ + podmet + „been ${verb.ingForm}“.`;
+        }
+        break;
+      }
+
+      case 'past-perfect': {
+        if (polarity === 'aff') {
+          tokens.push({ text: subjDisplay(subject, true), role: 'subject', labelSk: 'Podmet' });
+          tokens.push({ text: 'had', role: 'aux', labelSk: 'Pomocné had (všetky os.)' });
+          tokens.push({ text: verb.v3, role: 'verb', labelSk: '3. tvar (V3)!' });
+          tokens.push({ text: verb.complementEn, role: 'rest', labelSk: 'Predmet / doplnok' });
+          explanationSk = `Predminulý čas je pre všetky osoby rovnaký: „had“ + 3. tvar „${verb.v3}“ (dej sa stal ešte pred inou minulosťou).`;
+        } else if (polarity === 'neg') {
+          tokens.push({ text: subjDisplay(subject, true), role: 'subject', labelSk: 'Podmet' });
+          tokens.push({ text: "hadn't", role: 'neg', labelSk: 'had + not' });
+          tokens.push({ text: verb.v3, role: 'verb', labelSk: '3. tvar (V3)!' });
+          tokens.push({ text: verb.complementEn, role: 'rest', labelSk: 'Predmet / doplnok' });
+          explanationSk = `V zápore použijeme „hadn’t“ + 3. tvar „${verb.v3}“ (pre všetky osoby rovnako).`;
+        } else if (polarity === 'qPos') {
+          pushWh();
+          tokens.push({ text: effectiveWh ? 'had' : 'Had', role: 'aux', labelSk: 'Pomocné had' });
+          tokens.push({ text: subjDisplay(subject, false), role: 'subject', labelSk: 'Podmet' });
+          tokens.push({ text: verb.v3, role: 'verb', labelSk: '3. tvar (V3)!' });
+          tokens.push({ text: verb.complementEn, role: 'rest', labelSk: 'Predmet / doplnok' });
+          explanationSk = `V otázke presunieme „Had“ pred podmet „${subject}“ a sloveso ostáva v 3. tvare „${verb.v3}“.`;
+        } else {
+          pushWh();
+          tokens.push({ text: effectiveWh ? "hadn't" : "Hadn't", role: 'neg', labelSk: 'Záporné had' });
+          tokens.push({ text: subjDisplay(subject, false), role: 'subject', labelSk: 'Podmet' });
+          tokens.push({ text: verb.v3, role: 'verb', labelSk: '3. tvar (V3)!' });
+          tokens.push({ text: verb.complementEn, role: 'rest', labelSk: 'Predmet / doplnok' });
+          const fLead = effectiveWh ? `${effectiveWh} had` : 'Had';
+          formalEnglish = `${fLead} ${subjDisplay(subject, false)} not ${verb.v3} ${verb.complementEn}?`;
+          explanationSk = `Záporná predminulá otázka: „Hadn’t“ + podmet + 3. tvar „${verb.v3}“.`;
+        }
+        break;
+      }
+
       case 'future-will': {
         if (polarity === 'aff') {
           tokens.push({ text: subjDisplay(subject, true), role: 'subject', labelSk: 'Podmet' });
@@ -636,11 +708,16 @@ export function buildInteractiveSentence(params: {
     if (effectiveTense === 'present-continuous') {
       skCore += ' (práve teraz)';
     }
-  } else if (effectiveTense === 'past-simple' || effectiveTense === 'present-perfect') {
+  } else if (effectiveTense === 'present-perfect-continuous') {
+    const baseVerbSk = isNegative ? verb.skForms.presentNeg[subject] : verb.skForms.presentPos[subject];
+    skCore = `už nejaký čas ${baseVerbSk} ${verb.complementSk}`;
+  } else if (effectiveTense === 'past-simple' || effectiveTense === 'present-perfect' || effectiveTense === 'past-perfect') {
     const baseVerbSk = isNegative ? verb.skForms.pastNeg[subject] : verb.skForms.pastPos[subject];
     skCore = `${baseVerbSk} ${verb.complementSk}`;
     if (effectiveTense === 'present-perfect') {
       skCore += isNegative ? ' (zatiaľ)' : ' (už / skúsenosť)';
+    } else if (effectiveTense === 'past-perfect') {
+      skCore += ' (ešte predtým)';
     }
   } else if (effectiveTense === 'past-continuous') {
     const baseVerbSk = isNegative ? verb.skForms.pastContNeg[subject] : verb.skForms.pastContPos[subject];
@@ -649,7 +726,6 @@ export function buildInteractiveSentence(params: {
     const baseVerbSk = isNegative ? verb.skForms.futureNeg[subject] : verb.skForms.futurePos[subject];
     skCore = `${baseVerbSk} ${verb.complementSk}`;
   } else {
-    // future-going-to
     const auxSk = isNegative ? GOING_TO_AUX_SK[subject].neg : GOING_TO_AUX_SK[subject].pos;
     skCore = `${auxSk} ${verb.skForms.infinitiveSk} ${verb.complementSk}`;
   }

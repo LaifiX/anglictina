@@ -1,7 +1,14 @@
-import type { Accent, ProgressMap, SpeechRate, ThemeMode } from '../types/english';
+import type {
+  Accent,
+  ProgressMap,
+  SpeechRate,
+  TenseProgressMap,
+  ThemeMode,
+} from '../types/english';
 
 const KEYS = {
   progress: 'anglictina_verb_progress_v1',
+  tenseProgress: 'anglictina_tense_progress_v1',
   accent: 'anglictina_accent_v1',
   rate: 'anglictina_speech_rate_v1',
   theme: 'anglictina_theme_v1',
@@ -28,6 +35,25 @@ export function loadVerbProgress(): ProgressMap {
 export function saveVerbProgress(progress: ProgressMap): void {
   try {
     localStorage.setItem(KEYS.progress, JSON.stringify(progress));
+  } catch {
+    // Ignore storage quota errors
+  }
+}
+
+export function loadTenseProgress(): TenseProgressMap {
+  try {
+    const raw = localStorage.getItem(KEYS.tenseProgress);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === 'object' ? (parsed as TenseProgressMap) : {};
+  } catch {
+    return {};
+  }
+}
+
+export function saveTenseProgress(progress: TenseProgressMap): void {
+  try {
+    localStorage.setItem(KEYS.tenseProgress, JSON.stringify(progress));
   } catch {
     // Ignore storage quota errors
   }

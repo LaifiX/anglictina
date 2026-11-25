@@ -22,6 +22,9 @@ import type {
   AppTab,
   ProgressMap,
   SpeechRate,
+  TenseId,
+  TenseProgressMap,
+  TenseQuizLaunchRequest,
   ThemeMode,
   VerbLevel,
   VerbPattern,
@@ -32,11 +35,13 @@ import {
   loadDailyStreak,
   loadSfxEnabled,
   loadSpeechRate,
+  loadTenseProgress,
   loadTheme,
   loadVerbProgress,
   saveAccent,
   saveSfxEnabled,
   saveSpeechRate,
+  saveTenseProgress,
   saveTheme,
   saveVerbProgress,
   touchDailyStreak,
@@ -45,8 +50,8 @@ import {
 const TABS: { id: AppTab; label: string; short: string; Icon: LucideIcon }[] = [
   { id: 'verbs', label: 'Prehľad slovies', short: 'Slovesá', Icon: BookOpen },
   { id: 'practice', label: 'Precvičovanie slovies', short: 'Precvičiť', Icon: PenTool },
-  { id: 'grammar', label: 'Časy a otázky (+ / −)', short: 'Časy', Icon: GraduationCap },
-  { id: 'quiz', label: 'Kvíz z časov', short: 'Kvíz', Icon: CheckSquare },
+  { id: 'grammar', label: 'Kurz časov (9)', short: 'Časy', Icon: GraduationCap },
+  { id: 'quiz', label: 'Testy z časov', short: 'Testy', Icon: CheckSquare },
 ];
 
 export function App() {
@@ -56,11 +61,16 @@ export function App() {
   const [theme, setTheme] = useState<ThemeMode>(() => loadTheme());
   const [sfxEnabled, setSfxEnabled] = useState<boolean>(() => loadSfxEnabled());
   const [progress, setProgress] = useState<ProgressMap>(() => loadVerbProgress());
+  const [tenseProgress, setTenseProgress] = useState<TenseProgressMap>(() => loadTenseProgress());
   const [streak, setStreak] = useState(() => loadDailyStreak());
 
   // Synced filters when jumping from Dictionary -> Practice
   const [practiceLevel, setPracticeLevel] = useState<VerbLevel | 'all'>('all');
   const [practicePattern, setPracticePattern] = useState<VerbPattern | 'all'>('all');
+
+  // Cross-tab navigation between Tenses Course <-> Tense Test Studio
+  const [focusedTenseLesson, setFocusedTenseLesson] = useState<TenseId | undefined>(undefined);
+  const [quizLaunchRequest, setQuizLaunchRequest] = useState<TenseQuizLaunchRequest | null>(null);
 
   const speechAvailable = isSpeechSupported();
 
@@ -85,7 +95,6 @@ export function App() {
   }, [sfxEnabled]);
 
   useEffect(() => {
-    // Stop active speech when switching tabs
     stopSpeaking();
   }, [activeTab]);
 
@@ -121,9 +130,37 @@ export function App() {
     setStreak(touchDailyStreak());
   };
 
+  const handleRecordTenseResult = (exerciseId: string, isCorrect: boolean) => {
+    setTenseProgress((prev) => {
+      const current = prev[exerciseId] ?? {
+        attempts: 0,
+        correct: 0,
+        lastCorrect: false,
+        lastPracticedAt: 0,
+      };
+      const updated: TenseProgressMap = {
+        ...prev,
+        [exerciseId]: {
+          attempts: current.attempts + 1,
+          correct: current.correct + (isCorrect ? 1 : 0),
+          lastCorrect: isCorrect,
+          lastPracticedAt: Date.now(),
+        },
+      };
+      saveTenseProgress(updated);
+      return updated;
+    });
+    setStreak(touchDailyStreak());
+  };
+
   const handleResetProgress = () => {
     setProgress({});
     saveVerbProgress({});
+  };
+
+  const handleResetTenseProgress = () => {
+    setTenseProgress({});
+    saveTenseProgress({});
   };
 
   const handleStartPracticeWithFilter = (
@@ -133,6 +170,16 @@ export function App() {
     setPracticeLevel(lvl);
     setPracticePattern(pat);
     goToTab('practice');
+  };
+
+  const handleLaunchQuiz = (req: Omit<TenseQuizLaunchRequest, 'nonce'>) => {
+    setQuizLaunchRequest({ ...req, nonce: Date.now() + Math.random() });
+    goToTab('quiz');
+  };
+
+  const handleOpenTenseLesson = (tenseId: TenseId) => {
+    setFocusedTenseLesson(tenseId);
+    goToTab('grammar');
   };
 
   return (
@@ -145,7 +192,7 @@ export function App() {
             </div>
             <div className="brand-text">
               <h1 className="brand-title">Angličtina do vrecka</h1>
-              <span className="brand-sub">Nepravidelné slovesá, časy a otázky</span>
+              <span className="brand-sub">Nepravidelné slovesá a 9 anglických časov</span>
             </div>
           </div>
 
@@ -277,11 +324,28 @@ export function App() {
           )}
 
           {activeTab === 'grammar' && (
-            <GrammarSection accent={accent} rate={rate} onGoToQuiz={() => goToTab('quiz')} />
+            <GrammarSection
+              accent={accent}
+              rate={rate}
+              sfxEnabled={sfxEnabled}
+              tenseProgress={tenseProgress}
+              initialTenseId={focusedTenseLesson}
+              onLaunchQuiz={handleLaunchQuiz}
+              onRecordTenseResult={handleRecordTenseResult}
+            />
           )}
 
           {activeTab === 'quiz' && (
-            <GrammarQuiz accent={accent} rate={rate} sfxEnabled={sfxEnabled} />
+            <GrammarQuiz
+              accent={accent}
+              rate={rate}
+              sfxEnabled={sfxEnabled}
+              tenseProgress={tenseProgress}
+              launchRequest={quizLaunchRequest}
+              onRecordTenseResult={handleRecordTenseResult}
+              onResetTenseProgress={handleResetTenseProgress}
+              onOpenTenseLesson={handleOpenTenseLesson}
+            />
           )}
         </div>
       </main>
