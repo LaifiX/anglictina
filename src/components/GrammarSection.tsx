@@ -6,6 +6,7 @@ import {
   CheckCircle2,
   Compass,
   GitCompareArrows,
+  GraduationCap,
   HelpCircle,
   MessageCircleQuestion,
   Play,
@@ -20,6 +21,7 @@ import {
   TENSE_GUIDES,
 } from '../data/grammarData';
 import { ALL_TENSE_EXERCISES, EXERCISES_BY_TENSE } from '../data/tenses';
+import { DEEP_THEORY_BY_TENSE } from '../data/theoryAcademy';
 import type {
   Accent,
   SpeechRate,
@@ -37,8 +39,9 @@ import {
 import { AudioButton } from './AudioButton';
 import { SentenceLab } from './SentenceLab';
 import { TenseTimeline } from './TenseTimeline';
+import { TheoryAcademy } from './TheoryAcademy';
 
-type GrammarSubView = 'course' | 'lab' | 'map' | 'questions';
+type GrammarSubView = 'course' | 'theory' | 'lab' | 'map' | 'questions';
 
 interface GrammarSectionProps {
   accent: Accent;
@@ -78,7 +81,6 @@ export function GrammarSection({
     initialTenseId ?? recommendedTenseId
   );
 
-  // Sync when navigated here from a quiz explanation link
   const [lastPropTense, setLastPropTense] = useState<TenseId | undefined>(initialTenseId);
   if (initialTenseId && initialTenseId !== lastPropTense) {
     setLastPropTense(initialTenseId);
@@ -86,7 +88,6 @@ export function GrammarSection({
     setSubView('course');
   }
 
-  // Mini 3-question warm-up inside each lesson
   const [warmupAnswers, setWarmupAnswers] = useState<Record<string, string>>({});
 
   const activeGuide =
@@ -96,6 +97,8 @@ export function GrammarSection({
   const nextGuide =
     activeIndex < TENSE_GUIDES.length - 1 ? TENSE_GUIDES[activeIndex + 1] : null;
   const activeMastery = masteryByTense[activeGuide.id];
+  const activeCount = EXERCISES_BY_TENSE[activeGuide.id].length;
+  const activeDeepTheory = DEEP_THEORY_BY_TENSE[activeGuide.id];
 
   const recommendedCombo = useMemo(() => {
     if (!activeGuide.recommendedComboId) return null;
@@ -141,14 +144,19 @@ export function GrammarSection({
           <h2>Kurz anglických časov krok za krokom (9 časov)</h2>
           <p>
             Od základov A1 až po pokročilé časy B2 v logickej postupnosti. Každý čas má vizuálnu
-            časovú os, slovenské vysvetlenie, krátku rozcvičku a 100 cvičných príkladov.
+            časovú os, hlbokú teóriu polopate pre Slovákov, rozcvičku a{' '}
+            <strong>{activeCount} cvičných príkladov</strong> (spolu {ALL_TENSE_EXERCISES.length}).
           </p>
         </div>
         <div className="hero-actions">
-          <div className="stat-pill" title="Čas je zvládnutý po 20 správnych príkladoch s úspešnosťou aspoň 80 %">
+          <div
+            className="stat-pill"
+            title="Čas je zvládnutý po 20 správnych príkladoch s úspešnosťou aspoň 80 %"
+          >
             <CheckCircle2 size={14} aria-hidden="true" />
             <span>
-              Časy: {totalMasteredTenses}/9 · Príklady: {totalMasteredExamples}/{ALL_TENSE_EXERCISES.length}
+              Časy: {totalMasteredTenses}/9 · Príklady: {totalMasteredExamples}/
+              {ALL_TENSE_EXERCISES.length}
             </span>
           </div>
           <button
@@ -172,6 +180,7 @@ export function GrammarSection({
       <div className="tense-tabs" role="tablist" aria-label="Sekcie kurzu časov">
         {[
           { id: 'course' as const, label: 'Kurz (9 krokov)', Icon: Compass },
+          { id: 'theory' as const, label: 'Teória polopate', Icon: GraduationCap },
           { id: 'lab' as const, label: 'Laboratórium viet', Icon: Sparkles },
           { id: 'map' as const, label: 'Mapa 9 časov', Icon: Table2 },
           { id: 'questions' as const, label: 'Opytovanie (+ / −)', Icon: MessageCircleQuestion },
@@ -201,24 +210,34 @@ export function GrammarSection({
                   Tvoja učebná cesta (vyber si krok)
                 </h3>
                 <span className="small muted">
-                  Odporúčaný postup: od 1 po 9, alebo skoč rovno na čas, ktorý chceš precvičiť.
+                  Odporúčaný postup: od 1 po 9 — ku každému času máš {activeCount} príkladov.
                 </span>
               </div>
-              <button
-                type="button"
-                className="btn btn-secondary btn-sm"
-                onClick={() =>
-                  onLaunchQuiz({
-                    mode: 'all',
-                    tenses: TENSE_GUIDES.map((g) => g.id),
-                    roundSize: 20,
-                    autoStart: true,
-                  })
-                }
-              >
-                <Sparkles size={14} aria-hidden="true" />
-                <span>Finálny mix všetkých 9</span>
-              </button>
+              <div className="row">
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm"
+                  onClick={() => setSubView('theory')}
+                >
+                  <GraduationCap size={14} aria-hidden="true" />
+                  <span>Teória polopate</span>
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  onClick={() =>
+                    onLaunchQuiz({
+                      mode: 'all',
+                      tenses: TENSE_GUIDES.map((g) => g.id),
+                      roundSize: 20,
+                      autoStart: true,
+                    })
+                  }
+                >
+                  <Sparkles size={14} aria-hidden="true" />
+                  <span>Finálny mix všetkých 9</span>
+                </button>
+              </div>
             </div>
 
             <div className="roadmap-grid">
@@ -302,7 +321,7 @@ export function GrammarSection({
                   }
                 >
                   <Play size={16} aria-hidden="true" />
-                  <span>Precvičiť tento čas (100)</span>
+                  <span>Precvičiť tento čas ({activeCount})</span>
                 </button>
                 <button
                   type="button"
@@ -343,6 +362,63 @@ export function GrammarSection({
                 <p style={{ margin: 0, fontSize: '0.88rem' }}>{activeGuide.slovakBridgeSk}</p>
               </div>
             </div>
+
+            {/* Deep Academic "Polopate" Theory Box inside Every Lesson */}
+            {activeDeepTheory && (
+              <details className="deep-theory-box" open>
+                <summary className="deep-theory-summary">
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem' }}>
+                    <GraduationCap size={18} color="var(--primary)" aria-hidden="true" />
+                    <span>Akademická teória polopate: Ako tento čas cíti Angličan</span>
+                  </span>
+                  <span className="badge badge-blue">Pre Slovákov</span>
+                </summary>
+
+                <div className="deep-theory-body">
+                  <div className="mental-model-quote">{activeDeepTheory.mentalModelSk}</div>
+
+                  <div className="nuance-grid">
+                    {activeDeepTheory.nuancesSk.map((n) => (
+                      <div key={n.title} className="nuance-card">
+                        <div style={{ fontWeight: 800, fontSize: '0.9rem', marginBottom: '0.25rem' }}>
+                          {n.title}
+                        </div>
+                        <p style={{ margin: '0 0 0.5rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                          {n.text}
+                        </p>
+                        <div className="nuance-ex">
+                          <div>
+                            <div style={{ fontWeight: 750, fontSize: '0.88rem' }}>{n.exampleEn}</div>
+                            <div className="small muted">{n.exampleSk}</div>
+                          </div>
+                          <AudioButton text={n.exampleEn} accent={accent} rate={rate} iconOnly />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div>
+                    <div style={{ fontWeight: 800, fontSize: '0.88rem', marginBottom: '0.45rem' }}>
+                      Slovenský prekladový most (pozor na rovnakú slovenčinu vs. iný anglický čas):
+                    </div>
+                    <div className="stack-sm">
+                      {activeDeepTheory.slovakTranslationTraps.map((row) => (
+                        <div key={row.sk} className="bridge-row">
+                          <div className="bridge-sk">
+                            <span className="lang-tag">SK</span> {row.sk}
+                          </div>
+                          <div className="bridge-en">
+                            <strong>{row.en}</strong>
+                            <AudioButton text={row.en} accent={accent} rate={rate} iconOnly />
+                          </div>
+                          <div className="small muted">{row.noteSk}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </details>
+            )}
 
             {/* Forming Rules */}
             <div style={{ display: 'grid', gap: '0.65rem' }}>
@@ -543,7 +619,7 @@ export function GrammarSection({
                     })
                   }
                 >
-                  <span>Spustiť celý test (100 príkladov)</span>
+                  <span>Spustiť celý test ({activeCount} príkladov)</span>
                   <ArrowRight size={15} aria-hidden="true" />
                 </button>
               </div>
@@ -591,7 +667,10 @@ export function GrammarSection({
                         })}
                       </div>
                       {chosen && (
-                        <div className={isRight ? 'callout-success' : 'callout-error'} style={{ marginTop: '0.55rem', padding: '0.65rem 0.85rem' }}>
+                        <div
+                          className={isRight ? 'callout-success' : 'callout-error'}
+                          style={{ marginTop: '0.55rem', padding: '0.65rem 0.85rem' }}
+                        >
                           <div className="row-between" style={{ alignItems: 'center' }}>
                             <strong style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
                               {isRight ? (
@@ -673,12 +752,25 @@ export function GrammarSection({
         </div>
       )}
 
-      {/* === SUBVIEW 2: INTERACTIVE SENTENCE LAB === */}
+      {/* === SUBVIEW 2: POLOPATE THEORY ACADEMY FOR SLOVAKS === */}
+      {subView === 'theory' && (
+        <TheoryAcademy
+          accent={accent}
+          rate={rate}
+          onSelectLesson={(tid) => {
+            handleSelectTense(tid);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
+          onLaunchQuiz={onLaunchQuiz}
+        />
+      )}
+
+      {/* === SUBVIEW 3: INTERACTIVE SENTENCE LAB === */}
       {subView === 'lab' && (
         <SentenceLab accent={accent} rate={rate} initialTenseId={activeGuide.id} />
       )}
 
-      {/* === SUBVIEW 3: QUICK REFERENCE MAP OF ALL 9 TENSES === */}
+      {/* === SUBVIEW 4: QUICK REFERENCE MAP OF ALL 9 TENSES === */}
       {subView === 'map' && (
         <div className="card">
           <div className="row-between" style={{ alignItems: 'center', marginBottom: '0.85rem' }}>
@@ -687,7 +779,7 @@ export function GrammarSection({
                 Rýchla mapa všetkých 9 časov na jednom mieste
               </h3>
               <span className="small muted">
-                Ťukni na ktorýkoľvek čas pre otvorenie lekcie alebo priame spustenie 100 príkladov.
+                Ťukni na ktorýkoľvek čas pre otvorenie lekcie alebo priame spustenie testu.
               </span>
             </div>
           </div>
@@ -744,7 +836,7 @@ export function GrammarSection({
                             })
                           }
                         >
-                          Test (100)
+                          Test ({m.total})
                         </button>
                       </td>
                     </tr>
@@ -756,7 +848,7 @@ export function GrammarSection({
         </div>
       )}
 
-      {/* === SUBVIEW 4: POSITIVE & NEGATIVE QUESTIONS MASTER GUIDE === */}
+      {/* === SUBVIEW 5: POSITIVE & NEGATIVE QUESTIONS MASTER GUIDE === */}
       {subView === 'questions' && (
         <article
           className="card"

@@ -14,7 +14,8 @@ export type RawTenseExerciseRow = [
 export function buildTenseExercises(
   tenseId: TenseId,
   prefix: string,
-  rows: RawTenseExerciseRow[]
+  rows: RawTenseExerciseRow[],
+  startOffset = 0
 ): TenseExercise[] {
   return rows.map((row, idx) => {
     const [
@@ -28,7 +29,7 @@ export function buildTenseExercises(
       acceptedExtras,
     ] = row;
     return {
-      id: `${prefix}-${String(idx + 1).padStart(3, '0')}`,
+      id: `${prefix}-${String(startOffset + idx + 1).padStart(3, '0')}`,
       tenseId,
       polarity,
       sentenceWithBlank,

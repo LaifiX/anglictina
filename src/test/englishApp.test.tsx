@@ -9,6 +9,11 @@ import {
 } from '../data/grammarData';
 import { IRREGULAR_VERBS } from '../data/irregularVerbs';
 import { ALL_TENSE_EXERCISES, EXERCISES_BY_TENSE } from '../data/tenses';
+import {
+  DEEP_THEORY_BY_TENSE,
+  SLOVAK_TRAPS,
+  TENSE_DECISION_NODES,
+} from '../data/theoryAcademy';
 import { BUILDER_VERBS, buildInteractiveSentence } from '../utils/sentenceBuilder';
 import {
   buildChoiceOptions,
@@ -49,7 +54,7 @@ describe('Irregular Verbs Dataset Integrity', () => {
     }
   });
 
-  it('includes 9 ordered tense guides, combo presets, and legacy quiz integrity', () => {
+  it('includes 9 ordered tense guides, deep Slovak theory, decision compass, and combos', () => {
     expect(TENSE_GUIDES.length).toBe(9);
     expect(TENSE_GUIDES.map((g) => g.order)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9]);
     expect(TENSE_GUIDES.map((g) => g.id)).toEqual(TENSE_ORDER);
@@ -58,22 +63,29 @@ describe('Irregular Verbs Dataset Integrity', () => {
       expect(guide.matrix.map((m) => m.polarity)).toEqual(['aff', 'neg', 'qPos', 'qNeg']);
       expect(guide.formulaQuick.length).toBeGreaterThan(3);
       expect(guide.timelineCaptionSk.length).toBeGreaterThan(10);
+
+      const deep = DEEP_THEORY_BY_TENSE[guide.id];
+      expect(deep.mentalModelSk.length).toBeGreaterThan(30);
+      expect(deep.nuancesSk.length).toBeGreaterThanOrEqual(3);
+      expect(deep.slovakTranslationTraps.length).toBeGreaterThanOrEqual(3);
     }
     expect(TENSE_COMBO_PRESETS.length).toBeGreaterThanOrEqual(8);
+    expect(SLOVAK_TRAPS.length).toBe(7);
+    expect(TENSE_DECISION_NODES.length).toBe(9);
     expect(GRAMMAR_QUIZ.length).toBeGreaterThanOrEqual(16);
   });
 });
 
-describe('900 Tense Exercises Bank Integrity', () => {
-  it('contains exactly 100 valid unique exercises per tense (900 total) with all 4 polarities', () => {
-    expect(ALL_TENSE_EXERCISES.length).toBe(900);
+describe('2250 Tense Exercises Bank Integrity', () => {
+  it('contains exactly 250 valid unique exercises per tense (2250 total) with all 4 polarities', () => {
+    expect(ALL_TENSE_EXERCISES.length).toBe(2250);
 
     const seenIds = new Set<string>();
     const seenSentences = new Set<string>();
 
     for (const tenseId of TENSE_ORDER) {
       const bank = EXERCISES_BY_TENSE[tenseId];
-      expect(bank.length, `Expected 100 exercises for ${tenseId}`).toBe(100);
+      expect(bank.length, `Expected 250 exercises for ${tenseId}`).toBe(250);
 
       const polarityCounts = { aff: 0, neg: 0, qPos: 0, qNeg: 0 };
 
@@ -82,8 +94,11 @@ describe('900 Tense Exercises Bank Integrity', () => {
         expect(seenIds.has(ex.id), `Duplicate ID: ${ex.id}`).toBe(false);
         seenIds.add(ex.id);
 
-        const sentenceKey = `${ex.sentenceWithBlank.toLowerCase()}||${ex.verbCue.toLowerCase()}`;
-        expect(seenSentences.has(sentenceKey), `Duplicate sentence: ${ex.id} -> ${ex.sentenceWithBlank}`).toBe(false);
+        const sentenceKey = `${ex.tenseId}||${ex.sentenceWithBlank.toLowerCase()}||${ex.verbCue.toLowerCase()}`;
+        expect(
+          seenSentences.has(sentenceKey),
+          `Duplicate sentence: ${ex.id} -> ${ex.sentenceWithBlank}`
+        ).toBe(false);
         seenSentences.add(sentenceKey);
 
         // Exactly one ____ blank
@@ -95,7 +110,8 @@ describe('900 Tense Exercises Bank Integrity', () => {
         expect(ex.answer.trim().length).toBeGreaterThan(0);
         expect(ex.translationSk.trim().length).toBeGreaterThan(5);
         expect(ex.explanationSk.trim().length).toBeGreaterThan(10);
-        expect(ex.explanationSk).not.toMatch(/Opravíme|Upravíme|Počkaj —/i);
+        expect(ex.explanationSk).not.toMatch(/Opravíme|Upravíme|Počkaj —|zmeníme cue/i);
+        expect(ex.sentenceWithBlank).not.toMatch(/wait:/i);
 
         // 4 unique options (answer + 3 distractors)
         const allOptions = [ex.answer, ...ex.distractors];
@@ -115,10 +131,10 @@ describe('900 Tense Exercises Bank Integrity', () => {
         polarityCounts[ex.polarity] += 1;
       }
 
-      expect(polarityCounts.aff).toBeGreaterThanOrEqual(30);
-      expect(polarityCounts.neg).toBeGreaterThanOrEqual(20);
-      expect(polarityCounts.qPos).toBeGreaterThanOrEqual(20);
-      expect(polarityCounts.qNeg).toBeGreaterThanOrEqual(10);
+      expect(polarityCounts.aff).toBeGreaterThanOrEqual(80);
+      expect(polarityCounts.neg).toBeGreaterThanOrEqual(55);
+      expect(polarityCounts.qPos).toBeGreaterThanOrEqual(55);
+      expect(polarityCounts.qNeg).toBeGreaterThanOrEqual(35);
     }
   });
 });
@@ -144,7 +160,7 @@ describe('Tense Answer Checker & Adaptive Selection', () => {
     expect(isTenseAnswerCorrect(ppAff, 'have lost')).toBe(true);
   });
 
-  it('stratifies multi-tense selection across all 9 tenses and prioritizes missed/unseen items', () => {
+  it('stratifies multi-tense selection across all 9 tenses and reports mastery out of 250', () => {
     const mix = selectTenseRound({
       pool: ALL_TENSE_EXERCISES,
       count: 27,
@@ -165,7 +181,7 @@ describe('Tense Answer Checker & Adaptive Selection', () => {
       'ps-001': { attempts: 1, correct: 1, lastCorrect: true, lastPracticedAt: Date.now() },
       'ps-002': { attempts: 1, correct: 0, lastCorrect: false, lastPracticedAt: Date.now() },
     });
-    expect(mastery.total).toBe(100);
+    expect(mastery.total).toBe(250);
     expect(mastery.mastered).toBe(1);
     expect(mastery.mistakes).toBe(1);
     expect(mastery.status).toBe('in-progress');
@@ -340,25 +356,37 @@ describe('App UI Integration', () => {
     expect(screen.getByText(/Vysvetlenie po slovensky:/i)).toBeInTheDocument();
   });
 
-  it('navigates 9-step Tenses Course, Sentence Lab, and runs Tense Test Studio cleanly', () => {
+  it('navigates 9-step Course, Polopate Theory Academy, Sentence Lab, and 2250-example Test Studio', () => {
     render(<App />);
     fireEvent.click(screen.getByRole('tab', { name: /Kurz časov/i }));
     expect(screen.getByText(/Kurz anglických časov krok za krokom/i)).toBeInTheDocument();
-    expect(screen.getByText(/Prítomný jednoduchý čas/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Akademická teória polopate: Ako tento čas cíti Angličan/i)
+    ).toBeInTheDocument();
 
-    // Jump to Step 9 (Past Perfect)
-    fireEvent.click(screen.getByRole('button', { name: /Predminulý čas/i }));
-    expect(screen.getByText(/Predminulý čas \(minulosť pred minulosťou\)/i)).toBeInTheDocument();
+    // Open Polopate Theory Academy sub-tab
+    fireEvent.click(screen.getByRole('tab', { name: /Teória polopate/i }));
+    expect(
+      screen.getByText(/Rozhodovací kompas: Ktorý z 9 časov mám použiť\?/i)
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/7 najčastejších pascí, do ktorých padajú Slováci/i)
+    ).toBeInTheDocument();
 
-    // Open Sentence Lab inside Tenses Course
+    // Test Decision Compass switching to Future
+    fireEvent.click(screen.getByRole('button', { name: /^Budúcnosť$/i }));
+    expect(screen.getByText(/Budúci čas s „will“/i)).toBeInTheDocument();
+
+    // Open Sentence Lab
     fireEvent.click(screen.getByRole('tab', { name: /Laboratórium viet/i }));
     expect(
       screen.getByText(/Vyskúšaj si tvorbu času, kladnej aj zápornej otázky naživo/i)
     ).toBeInTheDocument();
 
-    // Switch to Test Studio, choose Final Mix (all 9 tenses), 10 questions, and start
+    // Switch to Test Studio (2250 exercises) and run a 250-example single tense or 10-example final mix
     fireEvent.click(screen.getByRole('tab', { name: /Testy z časov/i }));
-    expect(screen.getByText(/Testy z anglických časov \(900 príkladov\)/i)).toBeInTheDocument();
+    expect(screen.getByText(/Testy z anglických časov \(2250 príkladov\)/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^250$/ })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('tab', { name: /4\. Finálny mix/i }));
     fireEvent.click(screen.getByRole('button', { name: /^10$/ }));
@@ -367,7 +395,6 @@ describe('App UI Integration', () => {
     expect(screen.getByText(/Úloha 1 z 10/i)).toBeInTheDocument();
     expect(screen.getByText(/Zmiešané časy/i)).toBeInTheDocument();
 
-    // Answer the first multiple choice question
     const choiceBtns = document.querySelectorAll('.choice-btn');
     expect(choiceBtns.length).toBe(4);
     fireEvent.click(choiceBtns[0]);

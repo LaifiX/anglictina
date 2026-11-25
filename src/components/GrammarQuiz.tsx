@@ -25,7 +25,7 @@ import {
   TENSE_GUIDE_MAP,
   TENSE_ORDER,
 } from '../data/grammarData';
-import { ALL_TENSE_EXERCISES } from '../data/tenses';
+import { ALL_TENSE_EXERCISES, EXERCISES_BY_TENSE } from '../data/tenses';
 import type {
   Accent,
   SentencePolarity,
@@ -81,7 +81,7 @@ const ANSWER_MODES: { id: TenseAnswerMode; label: string; desc: string }[] = [
   { id: 'mixed', label: 'Striedavo (Mix)', desc: 'Strieda výber z možností a dopisovanie' },
 ];
 
-const ROUND_SIZES = [10, 20, 50, 100];
+const ROUND_SIZES = [10, 20, 50, 100, 250];
 
 function matchesPolarity(ex: TenseExercise, filter: TensePolarityFilter): boolean {
   if (filter === 'all') return true;
@@ -452,9 +452,9 @@ export function GrammarQuiz({
         <div>
           <section className="section-hero">
             <div>
-              <h2>Testy z anglických časov (900 príkladov)</h2>
+              <h2>Testy z anglických časov ({ALL_TENSE_EXERCISES.length} príkladov)</h2>
               <p>
-                Precvič si každý z 9 časov zvlášť (100 príkladov na každý čas), vyber si
+                Precvič si každý z 9 časov zvlášť (250 príkladov na každý čas), vyber si
                 porovnávacie kombinácie, naklikaj vlastný mix alebo si daj veľký záverečný test zo
                 všetkých 9 časov naraz.
               </p>
@@ -499,7 +499,7 @@ export function GrammarQuiz({
               {
                 id: 'single' as const,
                 title: '1. Jeden čas',
-                desc: '100 príkladov na každý z 9 časov',
+                desc: '250 príkladov na každý z 9 časov',
                 Icon: Layers,
               },
               {
@@ -551,7 +551,7 @@ export function GrammarQuiz({
                         Vyber jeden čas (postupnosť 1 → 9)
                       </h3>
                       <span className="small muted">
-                        Každý čas obsahuje 100 unikátnych viet (kladné, záporné aj otázky).
+                        Každý čas obsahuje 250 unikátnych viet (kladné, záporné aj otázky).
                       </span>
                     </div>
                   </div>
@@ -602,7 +602,10 @@ export function GrammarQuiz({
                   <div className="combo-grid">
                     {TENSE_COMBO_PRESETS.map((combo) => {
                       const active = selectedComboId === combo.id;
-                      const count = combo.tenses.length * 100;
+                      const count = combo.tenses.reduce(
+                        (sum, tid) => sum + EXERCISES_BY_TENSE[tid].length,
+                        0
+                      );
                       return (
                         <button
                           key={combo.id}
@@ -675,7 +678,7 @@ export function GrammarQuiz({
                               {g.order}. {g.shortTitleSk}
                             </div>
                             <div className="small muted">
-                              {g.titleEn} · {g.level} ({m.mastered}/100)
+                              {g.titleEn} · {g.level} ({m.mastered}/{m.total})
                             </div>
                           </div>
                         </label>
@@ -700,9 +703,9 @@ export function GrammarQuiz({
                     Finálny mix všetkých 9 anglických časov
                   </h3>
                   <p style={{ margin: '0 auto 1rem', maxWidth: '52ch', color: 'var(--text-secondary)' }}>
-                    Otázky vyberáme rovnomerne zo všetkých 9 časov (z celkovej banky 900 príkladov)
-                    a premiešame ich tak, aby si sa naučil pohotovo voliť správny čas ako v reálnej
-                    angličtine.
+                    Otázky vyberáme rovnomerne zo všetkých 9 časov (z celkovej banky{' '}
+                    {ALL_TENSE_EXERCISES.length} príkladov) a premiešame ich tak, aby si sa naučil
+                    pohotovo voliť správny čas ako v reálnej angličtine.
                   </p>
                   <div className="row" style={{ justifyContent: 'center' }}>
                     {TENSE_GUIDES.map((g) => (
@@ -831,7 +834,9 @@ export function GrammarQuiz({
                       </button>
                     ) : (
                       <div className="stack-sm">
-                        <span className="small muted">Naozaj vymazať pokrok všetkých 900 príkladov?</span>
+                        <span className="small muted">
+                          Naozaj vymazať pokrok všetkých {ALL_TENSE_EXERCISES.length} príkladov?
+                        </span>
                         <div className="row">
                           <button
                             type="button"

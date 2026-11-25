@@ -127,6 +127,12 @@ export interface TenseContrast {
   }[];
 }
 
+export interface TenseDeepTheory {
+  mentalModelSk: string;
+  nuancesSk: { title: string; text: string; exampleEn: string; exampleSk: string }[];
+  slovakTranslationTraps: { sk: string; en: string; noteSk: string }[];
+}
+
 export interface TenseGuide {
   id: TenseId;
   order: number;
@@ -159,6 +165,7 @@ export interface TenseGuide {
     negAnswerNoteSk: string;
   };
   contrast?: TenseContrast;
+  deepTheory?: TenseDeepTheory;
   recommendedComboId?: string;
 }
 

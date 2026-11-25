@@ -2257,6 +2257,249 @@ input[type='checkbox'] {
 }
 
 /* ==========================================================================
+   Polopate Theory Academy & Deep Lesson Theory
+   ========================================================================== */
+.academy-hero {
+  border-color: color-mix(in srgb, var(--primary) 30%, var(--border-subtle));
+}
+
+.academy-section {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.95rem;
+  scroll-margin-top: calc(var(--topbar-h) + 4rem);
+}
+
+.academy-section-head {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.academy-section-head h3 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.18rem, 1.02rem + 0.7vw, 1.4rem);
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  line-height: 1.25;
+}
+
+.academy-section-head h3 svg {
+  flex-shrink: 0;
+}
+
+.compass-time-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.compass-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+  gap: 0.9rem;
+  align-items: start;
+}
+
+.compass-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+  text-align: left;
+  padding: 0.78rem 0.9rem;
+  border-radius: var(--radius-md);
+  border: 1.5px solid var(--border-subtle);
+  background: var(--bg-page);
+  color: var(--text-main);
+  font-weight: 650;
+  font-size: 0.89rem;
+  line-height: 1.4;
+  min-height: 48px;
+  transition: border-color 0.15s, background-color 0.15s, box-shadow 0.15s;
+}
+
+.compass-option.active {
+  border-color: var(--primary);
+  background: var(--bg-tint);
+  box-shadow: 0 0 0 2px var(--primary-soft);
+}
+
+.compass-result {
+  background: var(--bg-page);
+  border: 1.5px solid color-mix(in srgb, var(--primary) 35%, var(--border-subtle));
+  border-radius: var(--radius-md);
+  padding: 1rem;
+}
+
+.aspect-card {
+  background: var(--bg-page);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 0.9rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.65rem;
+}
+
+.aspect-head {
+  font-size: 0.93rem;
+}
+
+.aspect-cols {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.6rem;
+}
+
+.aspect-cell {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 0.7rem 0.8rem;
+  min-width: 0;
+}
+
+.aspect-cell.is-bonus {
+  opacity: 0.82;
+  border-style: dashed;
+}
+
+.trap-card {
+  background: var(--bg-page);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 0.85rem 0.95rem;
+}
+
+.svompt-strip {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.svompt-cell {
+  background: var(--bg-page);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 0.65rem 0.6rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.2rem;
+}
+
+.svompt-code {
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: var(--on-primary);
+  font-weight: 800;
+  font-size: 0.8rem;
+}
+
+.pron-ed-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.7rem;
+}
+
+/* Deep theory inside every lesson */
+.deep-theory-box {
+  background: var(--bg-page);
+  border: 1.5px solid color-mix(in srgb, var(--primary) 30%, var(--border-subtle));
+  border-radius: var(--radius-md);
+  padding: 0.95rem 1.05rem;
+}
+
+.deep-theory-summary {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  cursor: pointer;
+  font-weight: 800;
+  font-size: 0.96rem;
+}
+
+.deep-theory-summary::-webkit-details-marker {
+  display: none;
+}
+
+.deep-theory-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.85rem;
+  margin-top: 0.85rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.mental-model-quote {
+  background: var(--bg-surface);
+  border-left: 4px solid var(--primary);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  padding: 0.75rem 0.95rem;
+  font-size: 0.91rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.nuance-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.nuance-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 0.75rem 0.85rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.nuance-ex {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.45rem;
+  padding-top: 0.45rem;
+  border-top: 1px dashed var(--border-subtle);
+}
+
+.bridge-row {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 0.65rem 0.8rem;
+  display: grid;
+  gap: 0.25rem;
+}
+
+.bridge-sk {
+  font-size: 0.86rem;
+  color: var(--text-secondary);
+}
+
+.bridge-en {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.92rem;
+}
+
+/* ==========================================================================
    Hover only where a real pointer exists (no sticky hover on touch)
    ========================================================================== */
 @media (hover: hover) and (pointer: fine) {
@@ -2320,7 +2563,8 @@ input[type='checkbox'] {
   .tense-pick-card:hover:not(.active),
   .combo-card:hover:not(.active),
   .custom-tense-item:hover:not(.active),
-  .warmup-opt:hover:not(:disabled) {
+  .warmup-opt:hover:not(:disabled),
+  .compass-option:hover:not(.active) {
     border-color: var(--primary);
     background: var(--bg-tint);
   }
@@ -2423,6 +2667,17 @@ input[type='checkbox'] {
 
   .tense-pick-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .compass-grid,
+  .aspect-cols,
+  .nuance-grid,
+  .pron-ed-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .svompt-strip {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
@@ -2793,6 +3048,10 @@ input[type='checkbox'] {
 @media (max-width: 420px) {
   .tense-pick-grid {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .svompt-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
