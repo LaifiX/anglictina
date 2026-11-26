@@ -66,7 +66,94 @@ export interface IrregularVerb {
   };
 }
 
-export type AppTab = 'verbs' | 'practice' | 'grammar' | 'quiz';
+export type AppTab = 'pathway' | 'verbs' | 'practice' | 'grammar' | 'quiz';
+
+export type CefrLevel = 'A1' | 'A2' | 'B1';
+
+export interface VocabItem {
+  id: string;
+  en: string;
+  sk: string;
+  pronunciationSk: string;
+  exampleEn: string;
+  exampleSk: string;
+  noteSk?: string;
+}
+
+export interface PracticalSentence {
+  id: string;
+  en: string;
+  sk: string;
+  situationSk: string;
+  politeTipSk?: string;
+}
+
+export interface DialogueTurn {
+  speaker: 'A' | 'B';
+  roleSk: string;
+  en: string;
+  sk: string;
+}
+
+export type CourseExerciseKind = 'vocab' | 'sentence' | 'dialogue' | 'grammar';
+
+export interface CourseExercise {
+  id: string;
+  moduleId: string;
+  level: CefrLevel;
+  kind: CourseExerciseKind;
+  promptSk: string;
+  sentenceEn?: string;
+  options: [string, string, string, string];
+  answer: string;
+  explanationSk: string;
+}
+
+export interface DialogueSection {
+  titleSk: string;
+  contextSk: string;
+  turns: DialogueTurn[];
+}
+
+export interface PracticalModule {
+  id: string;
+  level: CefrLevel;
+  order: number;
+  code: string;
+  themeTagSk: string;
+  titleSk: string;
+  subtitleSk: string;
+  grammarTitleSk: string;
+  grammarLeadSk: string;
+  grammarPointsSk: { title: string; ruleSk: string; exampleEn: string; exampleSk: string }[];
+  slovakTrapSk: string;
+  relatedTenses: TenseId[];
+  vocab: VocabItem[];
+  sentences: PracticalSentence[];
+  dialogue: DialogueSection;
+  extraDialogues?: DialogueSection[];
+  exercises: CourseExercise[];
+}
+
+export interface PathwayExerciseRecord {
+  attempts: number;
+  correct: number;
+  lastCorrect: boolean;
+  lastPracticedAt: number;
+}
+
+export interface PathwayProgressState {
+  learnedVocab: Record<string, boolean>;
+  learnedSentences: Record<string, boolean>;
+  exerciseRecords: Record<string, PathwayExerciseRecord>;
+}
+
+export interface DailyActivityStats {
+  date: string;
+  todayTasks: number;
+  todayCorrect: number;
+  totalTasks: number;
+}
 
 export type PracticeMode =
   | 'all-3'       // Type V1, V2, V3 from Slovak meaning + explanation

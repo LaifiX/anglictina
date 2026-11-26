@@ -2,6 +2,7 @@ import {
   BookOpen,
   CheckCircle2,
   CheckSquare,
+  Compass,
   Flame,
   GraduationCap,
   Moon,
@@ -14,12 +15,18 @@ import {
 import { useEffect, useMemo, useState } from 'react';
 import { GrammarQuiz } from './components/GrammarQuiz';
 import { GrammarSection } from './components/GrammarSection';
+import { PracticalCourse } from './components/PracticalCourse';
+import { ProgressModal } from './components/ProgressModal';
 import { VerbDictionary } from './components/VerbDictionary';
 import { VerbPractice } from './components/VerbPractice';
 import { IRREGULAR_VERBS } from './data/irregularVerbs';
+import { getPathwayOverallSummary } from './data/pathway';
+import { ALL_TENSE_EXERCISES } from './data/tenses';
 import type {
   Accent,
   AppTab,
+  DailyActivityStats,
+  PathwayProgressState,
   ProgressMap,
   SpeechRate,
   TenseId,
@@ -31,14 +38,22 @@ import type {
 } from './types/english';
 import { isSpeechSupported, stopSpeaking } from './utils/speech';
 import {
+  emptyPathwayProgress,
   loadAccent,
+  loadActiveTab,
+  loadDailyActivity,
   loadDailyStreak,
+  loadPathwayProgress,
   loadSfxEnabled,
   loadSpeechRate,
   loadTenseProgress,
   loadTheme,
   loadVerbProgress,
+  recordDailyActivity,
+  type restoreProgressBackup,
   saveAccent,
+  saveActiveTab,
+  savePathwayProgress,
   saveSfxEnabled,
   saveSpeechRate,
   saveTenseProgress,
@@ -48,21 +63,29 @@ import {
 } from './utils/storage';
 
 const TABS: { id: AppTab; label: string; short: string; Icon: LucideIcon }[] = [
-  { id: 'verbs', label: 'Prehľad slovies', short: 'Slovesá', Icon: BookOpen },
-  { id: 'practice', label: 'Precvičovanie slovies', short: 'Precvičiť', Icon: PenTool },
-  { id: 'grammar', label: 'Kurz časov (9)', short: 'Časy', Icon: GraduationCap },
+  { id: 'pathway', label: 'Kurz A1–B1 (Cesty)', short: 'A1–B1', Icon: Compass },
+  { id: 'grammar', label: 'Kurz časov a teória', short: 'Časy', Icon: GraduationCap },
   { id: 'quiz', label: 'Testy z časov', short: 'Testy', Icon: CheckSquare },
+  { id: 'verbs', label: 'Prehľad slovies', short: 'Slovesá', Icon: BookOpen },
+  { id: 'practice', label: 'Precvičovanie slovies', short: 'Tréning', Icon: PenTool },
 ];
 
 export function App() {
-  const [activeTab, setActiveTab] = useState<AppTab>('verbs');
+  const [activeTab, setActiveTab] = useState<AppTab>(() => loadActiveTab('pathway'));
   const [accent, setAccent] = useState<Accent>(() => loadAccent());
   const [rate, setRate] = useState<SpeechRate>(() => loadSpeechRate());
   const [theme, setTheme] = useState<ThemeMode>(() => loadTheme());
   const [sfxEnabled, setSfxEnabled] = useState<boolean>(() => loadSfxEnabled());
   const [progress, setProgress] = useState<ProgressMap>(() => loadVerbProgress());
   const [tenseProgress, setTenseProgress] = useState<TenseProgressMap>(() => loadTenseProgress());
+  const [pathwayProgress, setPathwayProgress] = useState<PathwayProgressState>(() =>
+    loadPathwayProgress()
+  );
+  const [dailyActivity, setDailyActivity] = useState<DailyActivityStats>(() =>
+    loadDailyActivity()
+  );
   const [streak, setStreak] = useState(() => loadDailyStreak());
+  const [showProgressModal, setShowProgressModal] = useState(false);
 
   // Synced filters when jumping from Dictionary -> Practice
   const [practiceLevel, setPracticeLevel] = useState<VerbLevel | 'all'>('all');
@@ -95,16 +118,64 @@ export function App() {
   }, [sfxEnabled]);
 
   useEffect(() => {
+    saveActiveTab(activeTab);
     stopSpeaking();
   }, [activeTab]);
 
-  const masteredCount = useMemo(() => {
-    return Object.values(progress).filter((rec) => rec.streak >= 2).length;
+  // Live counters across all 3 learning pillars
+  const verbsRightCount = useMemo(() => {
+    return Object.values(progress).filter((rec) => rec.streak >= 1).length;
   }, [progress]);
+
+  const tenseMasteredExamples = useMemo(() => {
+    return ALL_TENSE_EXERCISES.filter((ex) => Boolean(tenseProgress[ex.id]?.lastCorrect)).length;
+  }, [tenseProgress]);
+
+  const pathwaySummary = useMemo(() => {
+    return getPathwayOverallSummary(pathwayProgress);
+  }, [pathwayProgress]);
+
+  // Context-reactive topbar counter so the top bar ALWAYS reflects active learning immediately
+  const topbarStat = useMemo(() => {
+    if (activeTab === 'grammar' || activeTab === 'quiz') {
+      return {
+        prefixSk: 'Príklady:',
+        done: tenseMasteredExamples,
+        total: ALL_TENSE_EXERCISES.length,
+        aria: `Zvládnuté príklady z časov: ${tenseMasteredExamples} z ${ALL_TENSE_EXERCISES.length}. Dnes vyriešených úloh: ${dailyActivity.todayTasks}. Klikni pre celý prehľad pokroku.`,
+      };
+    }
+    if (activeTab === 'verbs' || activeTab === 'practice') {
+      return {
+        prefixSk: 'Slovesá:',
+        done: verbsRightCount,
+        total: IRREGULAR_VERBS.length,
+        aria: `Zvládnuté nepravidelné slovesá: ${verbsRightCount} zo ${IRREGULAR_VERBS.length}. Dnes vyriešených úloh: ${dailyActivity.todayTasks}. Klikni pre celý prehľad pokroku.`,
+      };
+    }
+    return {
+      prefixSk: 'A1–B1:',
+      done: pathwaySummary.itemsDone,
+      total: pathwaySummary.itemsTotal,
+      aria: `Praktický kurz A1 až B1: ${pathwaySummary.itemsDone} z ${pathwaySummary.itemsTotal} položiek. Dnes vyriešených úloh: ${dailyActivity.todayTasks}. Klikni pre celý prehľad pokroku.`,
+    };
+  }, [
+    activeTab,
+    tenseMasteredExamples,
+    verbsRightCount,
+    pathwaySummary.itemsDone,
+    pathwaySummary.itemsTotal,
+    dailyActivity.todayTasks,
+  ]);
 
   const goToTab = (tab: AppTab) => {
     setActiveTab(tab);
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const bumpActivity = (isCorrect: boolean) => {
+    setDailyActivity(recordDailyActivity(isCorrect));
+    setStreak(touchDailyStreak());
   };
 
   const handleRecordResult = (verbId: string, isCorrect: boolean) => {
@@ -127,7 +198,7 @@ export function App() {
       saveVerbProgress(updated);
       return updated;
     });
-    setStreak(touchDailyStreak());
+    bumpActivity(isCorrect);
   };
 
   const handleRecordTenseResult = (exerciseId: string, isCorrect: boolean) => {
@@ -150,7 +221,69 @@ export function App() {
       saveTenseProgress(updated);
       return updated;
     });
-    setStreak(touchDailyStreak());
+    bumpActivity(isCorrect);
+  };
+
+  const handleToggleVocabLearned = (vocabId: string) => {
+    let markedDone = false;
+    setPathwayProgress((prev) => {
+      const nextVal = !prev.learnedVocab[vocabId];
+      markedDone = nextVal;
+      const next: PathwayProgressState = {
+        ...prev,
+        learnedVocab: {
+          ...prev.learnedVocab,
+          [vocabId]: nextVal,
+        },
+      };
+      savePathwayProgress(next);
+      return next;
+    });
+    if (markedDone) bumpActivity(true);
+  };
+
+  const handleToggleSentenceLearned = (sentenceId: string) => {
+    let markedDone = false;
+    setPathwayProgress((prev) => {
+      const nextVal = !prev.learnedSentences[sentenceId];
+      markedDone = nextVal;
+      const next: PathwayProgressState = {
+        ...prev,
+        learnedSentences: {
+          ...prev.learnedSentences,
+          [sentenceId]: nextVal,
+        },
+      };
+      savePathwayProgress(next);
+      return next;
+    });
+    if (markedDone) bumpActivity(true);
+  };
+
+  const handleRecordCourseExercise = (exerciseId: string, isCorrect: boolean) => {
+    setPathwayProgress((prev) => {
+      const current = prev.exerciseRecords[exerciseId] ?? {
+        attempts: 0,
+        correct: 0,
+        lastCorrect: false,
+        lastPracticedAt: 0,
+      };
+      const next: PathwayProgressState = {
+        ...prev,
+        exerciseRecords: {
+          ...prev.exerciseRecords,
+          [exerciseId]: {
+            attempts: current.attempts + 1,
+            correct: current.correct + (isCorrect ? 1 : 0),
+            lastCorrect: isCorrect,
+            lastPracticedAt: Date.now(),
+          },
+        },
+      };
+      savePathwayProgress(next);
+      return next;
+    });
+    bumpActivity(isCorrect);
   };
 
   const handleResetProgress = () => {
@@ -161,6 +294,22 @@ export function App() {
   const handleResetTenseProgress = () => {
     setTenseProgress({});
     saveTenseProgress({});
+  };
+
+  const handleResetPathwayProgress = () => {
+    const empty = emptyPathwayProgress();
+    setPathwayProgress(empty);
+    savePathwayProgress(empty);
+  };
+
+  const handleRestoreBackup = (
+    payload: NonNullable<ReturnType<typeof restoreProgressBackup>>
+  ) => {
+    setProgress(payload.verbProgress);
+    setTenseProgress(payload.tenseProgress);
+    setPathwayProgress(payload.pathwayProgress);
+    setDailyActivity(payload.dailyActivity);
+    setStreak(payload.streak);
   };
 
   const handleStartPracticeWithFilter = (
@@ -192,23 +341,27 @@ export function App() {
             </div>
             <div className="brand-text">
               <h1 className="brand-title">Angličtina do vrecka</h1>
-              <span className="brand-sub">Nepravidelné slovesá a 9 anglických časov</span>
+              <span className="brand-sub">Kurz A1–B1 · Cestovanie · 9 časov · Slovesá</span>
             </div>
           </div>
 
           <div className="topbar-controls">
-            <div
-              className="stat-pill"
-              title="Slovesá správne zodpovedané aspoň 2× po sebe"
-              aria-label={`Zvládnuté slovesá: ${masteredCount} z ${IRREGULAR_VERBS.length}`}
+            <button
+              type="button"
+              className="stat-pill stat-pill-btn"
+              onClick={() => setShowProgressModal(true)}
+              title={`Dnes splnené úlohy: ${dailyActivity.todayTasks} · Klikni pre kompletný prehľad uloženého pokroku`}
+              aria-label={topbarStat.aria}
             >
               <CheckCircle2 size={14} aria-hidden="true" />
               <span>
-                <span className="label-full">Zvládnuté: </span>
-                {masteredCount}
-                <span className="label-full"> / {IRREGULAR_VERBS.length}</span>
+                <span className="label-full">{topbarStat.prefixSk} </span>
+                {topbarStat.done}/{topbarStat.total}
+                {dailyActivity.todayTasks > 0 && (
+                  <span className="label-full"> · Dnes: {dailyActivity.todayTasks}</span>
+                )}
               </span>
-            </div>
+            </button>
 
             {streak.count > 0 && (
               <div className="streak-pill" title={`Denná séria: ${streak.count} dní`}>
@@ -301,6 +454,21 @@ export function App() {
             </div>
           )}
 
+          {activeTab === 'pathway' && (
+            <PracticalCourse
+              accent={accent}
+              rate={rate}
+              sfxEnabled={sfxEnabled}
+              pathwayProgress={pathwayProgress}
+              tenseProgress={tenseProgress}
+              onToggleVocabLearned={handleToggleVocabLearned}
+              onToggleSentenceLearned={handleToggleSentenceLearned}
+              onRecordCourseExercise={handleRecordCourseExercise}
+              onOpenTenseLesson={handleOpenTenseLesson}
+              onLaunchTenseQuiz={handleLaunchQuiz}
+            />
+          )}
+
           {activeTab === 'verbs' && (
             <VerbDictionary
               accent={accent}
@@ -349,6 +517,20 @@ export function App() {
           )}
         </div>
       </main>
+
+      {showProgressModal && (
+        <ProgressModal
+          onClose={() => setShowProgressModal(false)}
+          verbProgress={progress}
+          tenseProgress={tenseProgress}
+          pathwayProgress={pathwayProgress}
+          dailyActivity={dailyActivity}
+          streak={streak}
+          onNavigateTab={goToTab}
+          onRestoreBackup={handleRestoreBackup}
+          onResetPathway={handleResetPathwayProgress}
+        />
+      )}
     </div>
   );
 }

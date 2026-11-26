@@ -8,24 +8,20 @@ import {
   GitCompareArrows,
   GraduationCap,
   HelpCircle,
-  MessageCircleQuestion,
+  Layers,
   Play,
   Sparkles,
-  Table2,
   XCircle,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import {
-  QUESTION_MASTER_GUIDE,
-  TENSE_COMBO_PRESETS,
-  TENSE_GUIDES,
-} from '../data/grammarData';
+import { TENSE_COMBO_PRESETS, TENSE_GUIDES } from '../data/grammarData';
 import { ALL_TENSE_EXERCISES, EXERCISES_BY_TENSE } from '../data/tenses';
 import { DEEP_THEORY_BY_TENSE } from '../data/theoryAcademy';
 import type {
   Accent,
   SpeechRate,
   TenseExercise,
+  TenseGuide,
   TenseId,
   TenseProgressMap,
   TenseQuizLaunchRequest,
@@ -41,7 +37,9 @@ import { SentenceLab } from './SentenceLab';
 import { TenseTimeline } from './TenseTimeline';
 import { TheoryAcademy } from './TheoryAcademy';
 
-type GrammarSubView = 'course' | 'theory' | 'lab' | 'map' | 'questions';
+type GrammarSubView = 'course' | 'theory' | 'lab';
+type RoadmapViewMode = 'steps' | 'time-groups';
+type LessonPanelTab = 'meaning' | 'forms' | 'contrast' | 'warmup';
 
 interface GrammarSectionProps {
   accent: Accent;
@@ -53,6 +51,32 @@ interface GrammarSectionProps {
   onRecordTenseResult: (exerciseId: string, isCorrect: boolean) => void;
 }
 
+const TIME_GROUP_META: {
+  category: 'present' | 'past' | 'future';
+  labelSk: string;
+  badgeCls: string;
+  hintSk: string;
+}[] = [
+  {
+    category: 'present',
+    labelSk: 'Prítomnosť (a most k prítomnosti)',
+    badgeCls: 'badge-emerald',
+    hintSk: 'Zvyky, práve teraz a výsledok doteraz',
+  },
+  {
+    category: 'past',
+    labelSk: 'Minulosť',
+    badgeCls: 'badge-blue',
+    hintSk: 'Uzavreté udalosti, rozbehnuté pozadie a predminulosť',
+  },
+  {
+    category: 'future',
+    labelSk: 'Budúcnosť',
+    badgeCls: 'badge-purple',
+    hintSk: 'Spontánne rozhodnutia (will) a hotové plány (going to)',
+  },
+];
+
 export function GrammarSection({
   accent,
   rate,
@@ -63,6 +87,8 @@ export function GrammarSection({
   onRecordTenseResult,
 }: GrammarSectionProps) {
   const [subView, setSubView] = useState<GrammarSubView>('course');
+  const [roadmapMode, setRoadmapMode] = useState<RoadmapViewMode>('time-groups');
+  const [lessonTab, setLessonTab] = useState<LessonPanelTab>('meaning');
 
   const masteryByTense = useMemo(() => {
     const map = {} as Record<TenseId, ReturnType<typeof getTenseMastery>>;
@@ -86,6 +112,7 @@ export function GrammarSection({
     setLastPropTense(initialTenseId);
     setSelectedTenseId(initialTenseId);
     setSubView('course');
+    setLessonTab('meaning');
   }
 
   const [warmupAnswers, setWarmupAnswers] = useState<Record<string, string>>({});
@@ -126,6 +153,7 @@ export function GrammarSection({
   const handleSelectTense = (id: TenseId) => {
     setSelectedTenseId(id);
     setSubView('course');
+    setLessonTab('meaning');
   };
 
   const handleWarmupPick = (ex: TenseExercise, chosen: string) => {
@@ -137,15 +165,58 @@ export function GrammarSection({
     speakText(fillSentenceBlank(ex.sentenceWithBlank, ex.answer), { accent, rate });
   };
 
+  const renderTenseStepButton = (g: TenseGuide) => {
+    const m = masteryByTense[g.id];
+    const isSelected = g.id === activeGuide.id;
+    const isRecommended = g.id === recommendedTenseId && m.status !== 'mastered';
+    const pct = Math.min(100, Math.round((m.mastered / Math.max(m.total, 1)) * 100));
+
+    return (
+      <button
+        key={g.id}
+        type="button"
+        className={`roadmap-step ${isSelected ? 'active' : ''} ${
+          m.status === 'mastered' ? 'mastered' : ''
+        }`}
+        onClick={() => handleSelectTense(g.id)}
+        aria-current={isSelected ? 'step' : undefined}
+      >
+        <div className="roadmap-step-top">
+          <span className="roadmap-num">
+            {m.status === 'mastered' ? <CheckCircle2 size={14} aria-hidden="true" /> : g.order}
+          </span>
+          <span className="badge badge-outline">{g.level}</span>
+          {isRecommended && (
+            <span className="badge badge-amber" style={{ marginLeft: 'auto' }}>
+              Odporúčané
+            </span>
+          )}
+        </div>
+        <div className="roadmap-step-title">{g.shortTitleSk}</div>
+        <div className="roadmap-step-en">
+          {g.titleEn} · <span className="mono">{g.formulaQuick}</span>
+        </div>
+        <div className="roadmap-step-foot">
+          <div className="mini-bar" aria-hidden="true">
+            <span style={{ width: `${pct}%` }} />
+          </div>
+          <span className="roadmap-step-count">
+            {m.mastered}/{m.total}
+          </span>
+        </div>
+      </button>
+    );
+  };
+
   return (
     <div>
       <section className="section-hero">
         <div>
           <h2>Kurz anglických časov krok za krokom (9 časov)</h2>
           <p>
-            Od základov A1 až po pokročilé časy B2 v logickej postupnosti. Každý čas má vizuálnu
-            časovú os, hlbokú teóriu polopate pre Slovákov, rozcvičku a{' '}
-            <strong>{activeCount} cvičných príkladov</strong> (spolu {ALL_TENSE_EXERCISES.length}).
+            Všetko o anglických časoch prehľadne na jednom mieste: <strong>9 lekcií časov</strong>{' '}
+            (každý s {activeCount} príkladmi), <strong>Teória polopate</strong> pre Slovákov a{' '}
+            <strong>Laboratórium viet</strong>.
           </p>
         </div>
         <div className="hero-actions">
@@ -171,126 +242,111 @@ export function GrammarSection({
             }
           >
             <Play size={16} aria-hidden="true" />
-            <span>Testy z časov</span>
+            <span>Prejsť na testy ({ALL_TENSE_EXERCISES.length})</span>
           </button>
         </div>
       </section>
 
-      {/* Sub-navigation inside Tenses */}
-      <div className="tense-tabs" role="tablist" aria-label="Sekcie kurzu časov">
+      {/* Clean 3-Part Sub-Navigation (instead of 5 scattered tabs) */}
+      <div className="subview-bar" role="tablist" aria-label="Sekcie kurzu časov">
         {[
-          { id: 'course' as const, label: 'Kurz (9 krokov)', Icon: Compass },
-          { id: 'theory' as const, label: 'Teória polopate', Icon: GraduationCap },
-          { id: 'lab' as const, label: 'Laboratórium viet', Icon: Sparkles },
-          { id: 'map' as const, label: 'Mapa 9 časov', Icon: Table2 },
-          { id: 'questions' as const, label: 'Opytovanie (+ / −)', Icon: MessageCircleQuestion },
-        ].map(({ id, label, Icon }) => (
+          {
+            id: 'course' as const,
+            label: '1. Prehľad a lekcie 9 časov',
+            shortLabel: '9 časov',
+            Icon: Compass,
+          },
+          {
+            id: 'theory' as const,
+            label: '2. Teória polopate (Systém)',
+            shortLabel: 'Teória polopate',
+            Icon: GraduationCap,
+          },
+          {
+            id: 'lab' as const,
+            label: '3. Laboratórium viet',
+            shortLabel: 'Laboratórium viet',
+            Icon: Sparkles,
+          },
+        ].map(({ id, label, shortLabel, Icon }) => (
           <button
             key={id}
             type="button"
             role="tab"
             aria-selected={subView === id}
-            className={`filter-chip ${subView === id ? 'active' : ''}`}
+            className={`subview-tab ${subView === id ? 'active' : ''}`}
             onClick={() => setSubView(id)}
           >
-            <Icon size={15} aria-hidden="true" />
-            <span>{label}</span>
+            <Icon size={16} aria-hidden="true" />
+            <span className="label-full">{label}</span>
+            <span className="label-short">{shortLabel}</span>
           </button>
         ))}
       </div>
 
-      {/* === SUBVIEW 1: GUIDED 9-STEP COURSE === */}
+      {/* === SUBVIEW 1: ORGANIZED 9-TENSE MAP + TABBED LESSON === */}
       {subView === 'course' && (
         <div className="stack">
-          {/* 9-Step Progression Roadmap */}
-          <section className="card roadmap-panel" aria-label="Postupnosť 9 časov">
-            <div className="row-between" style={{ alignItems: 'center', marginBottom: '0.7rem' }}>
+          {/* Visual 9-Tense Picker: Group by Time OR Order 1 -> 9 */}
+          <section className="card roadmap-panel" aria-label="Prehľad 9 časov">
+            <div className="row-between" style={{ alignItems: 'center', marginBottom: '0.75rem' }}>
               <div>
                 <h3 className="panel-title" style={{ marginBottom: '0.1rem' }}>
-                  Tvoja učebná cesta (vyber si krok)
+                  Vyber si čas na štúdium (1 až 9)
                 </h3>
                 <span className="small muted">
-                  Odporúčaný postup: od 1 po 9 — ku každému času máš {activeCount} príkladov.
+                  Zoraď si časy vizuálne podľa Prítomnosti / Minulosti / Budúcnosti alebo podľa
+                  krokov A1 → B2.
                 </span>
               </div>
-              <div className="row">
+
+              <div className="row" style={{ gap: '0.35rem' }}>
                 <button
                   type="button"
-                  className="btn btn-ghost btn-sm"
-                  onClick={() => setSubView('theory')}
+                  className={`filter-chip ${roadmapMode === 'time-groups' ? 'active' : ''}`}
+                  onClick={() => setRoadmapMode('time-groups')}
                 >
-                  <GraduationCap size={14} aria-hidden="true" />
-                  <span>Teória polopate</span>
+                  <Layers size={14} aria-hidden="true" />
+                  <span>Podľa času (Prít. / Min. / Bud.)</span>
                 </button>
                 <button
                   type="button"
-                  className="btn btn-secondary btn-sm"
-                  onClick={() =>
-                    onLaunchQuiz({
-                      mode: 'all',
-                      tenses: TENSE_GUIDES.map((g) => g.id),
-                      roundSize: 20,
-                      autoStart: true,
-                    })
-                  }
+                  className={`filter-chip ${roadmapMode === 'steps' ? 'active' : ''}`}
+                  onClick={() => setRoadmapMode('steps')}
                 >
-                  <Sparkles size={14} aria-hidden="true" />
-                  <span>Finálny mix všetkých 9</span>
+                  <Compass size={14} aria-hidden="true" />
+                  <span>Postupnosť 1 → 9</span>
                 </button>
               </div>
             </div>
 
-            <div className="roadmap-grid">
-              {TENSE_GUIDES.map((g) => {
-                const m = masteryByTense[g.id];
-                const isSelected = g.id === activeGuide.id;
-                const isRecommended = g.id === recommendedTenseId && m.status !== 'mastered';
-                const pct = Math.min(100, Math.round((m.mastered / Math.max(m.total, 1)) * 100));
-
-                return (
-                  <button
-                    key={g.id}
-                    type="button"
-                    className={`roadmap-step ${isSelected ? 'active' : ''} ${m.status === 'mastered' ? 'mastered' : ''}`}
-                    onClick={() => handleSelectTense(g.id)}
-                    aria-current={isSelected ? 'step' : undefined}
-                  >
-                    <div className="roadmap-step-top">
-                      <span className="roadmap-num">
-                        {m.status === 'mastered' ? (
-                          <CheckCircle2 size={14} aria-hidden="true" />
-                        ) : (
-                          g.order
-                        )}
-                      </span>
-                      <span className="badge badge-outline">{g.level}</span>
-                      {isRecommended && (
-                        <span className="badge badge-amber" style={{ marginLeft: 'auto' }}>
-                          Ďalej
-                        </span>
-                      )}
-                    </div>
-                    <div className="roadmap-step-title">{g.shortTitleSk}</div>
-                    <div className="roadmap-step-en">{g.titleEn}</div>
-                    <div className="roadmap-step-foot">
-                      <div className="mini-bar" aria-hidden="true">
-                        <span style={{ width: `${pct}%` }} />
+            {roadmapMode === 'steps' ? (
+              <div className="roadmap-grid">{TENSE_GUIDES.map(renderTenseStepButton)}</div>
+            ) : (
+              <div className="time-groups-wrap">
+                {TIME_GROUP_META.map((grp) => {
+                  const groupGuides = TENSE_GUIDES.filter((g) => g.category === grp.category);
+                  return (
+                    <div key={grp.category} className="time-group-col">
+                      <div className="time-group-head">
+                        <span className={`badge ${grp.badgeCls}`}>{grp.labelSk}</span>
+                        <span className="small muted">{grp.hintSk}</span>
                       </div>
-                      <span className="roadmap-step-count">
-                        {m.mastered}/{m.total}
-                      </span>
+                      <div className="time-group-list">
+                        {groupGuides.map(renderTenseStepButton)}
+                      </div>
                     </div>
-                  </button>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            )}
           </section>
 
-          {/* Active Lesson Card */}
+          {/* Active Tense Lesson — Cleanly Divided into 4 Focused Tabs */}
           <article id={`tense-${activeGuide.id}`} className="card tense-card">
             <div className="lesson-header">
               <div>
-                <div className="row" style={{ marginBottom: '0.4rem' }}>
+                <div className="row" style={{ marginBottom: '0.35rem' }}>
                   <span className="badge badge-blue">
                     Krok {activeGuide.order} z {TENSE_GUIDES.length}
                   </span>
@@ -321,380 +377,538 @@ export function GrammarSection({
                   }
                 >
                   <Play size={16} aria-hidden="true" />
-                  <span>Precvičiť tento čas ({activeCount})</span>
+                  <span>Spustiť test ({activeCount} príkladov)</span>
                 </button>
+                <div className="small muted" style={{ textAlign: 'center' }}>
+                  Zvládnuté v teste: <strong>{activeMastery.mastered}/{activeCount}</strong>
+                </div>
+              </div>
+            </div>
+
+            {/* 4 Clean Non-Sticky Lesson Tabs */}
+            <div className="lesson-subtabs" role="tablist" aria-label="Časti lekcie času">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={lessonTab === 'meaning'}
+                className={`filter-chip ${lessonTab === 'meaning' ? 'active' : ''}`}
+                onClick={() => setLessonTab('meaning')}
+              >
+                <span>1. Podstata & Kedy použiť</span>
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={lessonTab === 'forms'}
+                className={`filter-chip ${lessonTab === 'forms' ? 'active' : ''}`}
+                onClick={() => setLessonTab('forms')}
+              >
+                <span>2. Tvorba viet (+ / − / ?)</span>
+              </button>
+              {activeGuide.contrast && (
                 <button
                   type="button"
-                  className="btn btn-secondary btn-sm"
-                  onClick={() => setSubView('lab')}
+                  role="tab"
+                  aria-selected={lessonTab === 'contrast'}
+                  className={`filter-chip ${lessonTab === 'contrast' ? 'active' : ''}`}
+                  onClick={() => setLessonTab('contrast')}
                 >
-                  <Sparkles size={15} aria-hidden="true" />
-                  <span>Otvoriť v laboratóriu viet</span>
+                  <span>3. Nepliesť si s iným časom</span>
                 </button>
-              </div>
+              )}
+              <button
+                type="button"
+                role="tab"
+                aria-selected={lessonTab === 'warmup'}
+                className={`filter-chip ${lessonTab === 'warmup' ? 'active' : ''}`}
+                onClick={() => setLessonTab('warmup')}
+              >
+                <span>
+                  {activeGuide.contrast ? '4.' : '3.'} Rýchla rozcvička (3)
+                </span>
+              </button>
             </div>
 
-            {/* Visual Timeline */}
-            <TenseTimeline
-              tenseId={activeGuide.id}
-              captionSk={activeGuide.timelineCaptionSk}
-            />
+            {/* === LESSON TAB 1: MEANING, TIMELINE & DEEP SLOVAK LOGIC === */}
+            {lessonTab === 'meaning' && (
+              <div className="stack">
+                <TenseTimeline
+                  tenseId={activeGuide.id}
+                  captionSk={activeGuide.timelineCaptionSk}
+                />
 
-            {/* When to use + Slovak bridge */}
-            <div className="two-col-grid">
-              <div className="card-muted">
-                <h4>
-                  <CheckCircle2 size={16} color="var(--emerald)" />
-                  <span>Kedy tento čas používame?</span>
-                </h4>
-                <ul>
-                  {activeGuide.whenToUseSk.map((item) => (
-                    <li key={item}>{item}</li>
-                  ))}
-                </ul>
-              </div>
-
-              <div className="callout-info">
-                <h4>
-                  <BookOpen size={16} />
-                  <span>Vysvetlenie cez slovenčinu</span>
-                </h4>
-                <p style={{ margin: 0, fontSize: '0.88rem' }}>{activeGuide.slovakBridgeSk}</p>
-              </div>
-            </div>
-
-            {/* Deep Academic "Polopate" Theory Box inside Every Lesson */}
-            {activeDeepTheory && (
-              <details className="deep-theory-box" open>
-                <summary className="deep-theory-summary">
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem' }}>
-                    <GraduationCap size={18} color="var(--primary)" aria-hidden="true" />
-                    <span>Akademická teória polopate: Ako tento čas cíti Angličan</span>
-                  </span>
-                  <span className="badge badge-blue">Pre Slovákov</span>
-                </summary>
-
-                <div className="deep-theory-body">
-                  <div className="mental-model-quote">{activeDeepTheory.mentalModelSk}</div>
-
-                  <div className="nuance-grid">
-                    {activeDeepTheory.nuancesSk.map((n) => (
-                      <div key={n.title} className="nuance-card">
-                        <div style={{ fontWeight: 800, fontSize: '0.9rem', marginBottom: '0.25rem' }}>
-                          {n.title}
-                        </div>
-                        <p style={{ margin: '0 0 0.5rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                          {n.text}
-                        </p>
-                        <div className="nuance-ex">
-                          <div>
-                            <div style={{ fontWeight: 750, fontSize: '0.88rem' }}>{n.exampleEn}</div>
-                            <div className="small muted">{n.exampleSk}</div>
-                          </div>
-                          <AudioButton text={n.exampleEn} accent={accent} rate={rate} iconOnly />
-                        </div>
-                      </div>
-                    ))}
+                <div className="two-col-grid">
+                  <div className="card-muted">
+                    <h4>
+                      <CheckCircle2 size={16} color="var(--emerald)" />
+                      <span>Kedy tento čas používame?</span>
+                    </h4>
+                    <ul>
+                      {activeGuide.whenToUseSk.map((item) => (
+                        <li key={item}>{item}</li>
+                      ))}
+                    </ul>
                   </div>
 
-                  <div>
-                    <div style={{ fontWeight: 800, fontSize: '0.88rem', marginBottom: '0.45rem' }}>
-                      Slovenský prekladový most (pozor na rovnakú slovenčinu vs. iný anglický čas):
-                    </div>
-                    <div className="stack-sm">
-                      {activeDeepTheory.slovakTranslationTraps.map((row) => (
-                        <div key={row.sk} className="bridge-row">
-                          <div className="bridge-sk">
-                            <span className="lang-tag">SK</span> {row.sk}
-                          </div>
-                          <div className="bridge-en">
-                            <strong>{row.en}</strong>
-                            <AudioButton text={row.en} accent={accent} rate={rate} iconOnly />
-                          </div>
-                          <div className="small muted">{row.noteSk}</div>
-                        </div>
-                      ))}
-                    </div>
+                  <div className="callout-info">
+                    <h4>
+                      <BookOpen size={16} />
+                      <span>Vysvetlenie cez slovenčinu</span>
+                    </h4>
+                    <p style={{ margin: 0, fontSize: '0.88rem' }}>{activeGuide.slovakBridgeSk}</p>
                   </div>
                 </div>
-              </details>
+
+                {/* Signal Words */}
+                <div className="card-muted">
+                  <div
+                    style={{
+                      fontSize: '0.84rem',
+                      fontWeight: 800,
+                      marginBottom: '0.45rem',
+                      color: 'var(--text-secondary)',
+                    }}
+                  >
+                    Typické slovíčka (signály vo vete):
+                  </div>
+                  <div className="row">
+                    {activeGuide.signalWords.map((sw) => (
+                      <span key={sw.en} className="badge badge-blue">
+                        {sw.en} ({sw.sk})
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Deep Academic "Polopate" Theory Box */}
+                {activeDeepTheory && (
+                  <div className="deep-theory-box">
+                    <div className="row-between" style={{ alignItems: 'center', marginBottom: '0.65rem' }}>
+                      <strong style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem' }}>
+                        <GraduationCap size={18} color="var(--primary)" aria-hidden="true" />
+                        <span>Akademická teória polopate: Ako tento čas cíti Angličan</span>
+                      </strong>
+                      <span className="badge badge-blue">Pre Slovákov</span>
+                    </div>
+
+                    <div className="stack">
+                      <div className="mental-model-quote">{activeDeepTheory.mentalModelSk}</div>
+
+                      <div className="nuance-grid">
+                        {activeDeepTheory.nuancesSk.map((n) => (
+                          <div key={n.title} className="nuance-card">
+                            <div>
+                              <div
+                                style={{
+                                  fontWeight: 800,
+                                  fontSize: '0.9rem',
+                                  marginBottom: '0.25rem',
+                                }}
+                              >
+                                {n.title}
+                              </div>
+                              <p
+                                style={{
+                                  margin: '0 0 0.5rem',
+                                  fontSize: '0.85rem',
+                                  color: 'var(--text-secondary)',
+                                }}
+                              >
+                                {n.text}
+                              </p>
+                            </div>
+                            <div className="nuance-ex">
+                              <div style={{ minWidth: 0 }}>
+                                <div style={{ fontWeight: 750, fontSize: '0.88rem' }}>
+                                  {n.exampleEn}
+                                </div>
+                                <div className="small muted">{n.exampleSk}</div>
+                              </div>
+                              <AudioButton text={n.exampleEn} accent={accent} rate={rate} iconOnly />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div>
+                        <div style={{ fontWeight: 800, fontSize: '0.88rem', marginBottom: '0.45rem' }}>
+                          Slovenský prekladový most (pozor na rovnakú slovenčinu vs. iný anglický
+                          čas):
+                        </div>
+                        <div className="stack-sm">
+                          {activeDeepTheory.slovakTranslationTraps.map((row) => (
+                            <div key={row.sk} className="bridge-row">
+                              <div className="bridge-sk">
+                                <span className="lang-tag">SK</span> {row.sk}
+                              </div>
+                              <div className="bridge-en">
+                                <strong style={{ flex: '1 1 180px', minWidth: 0 }}>{row.en}</strong>
+                                <AudioButton text={row.en} accent={accent} rate={rate} iconOnly />
+                              </div>
+                              <div className="small muted">{row.noteSk}</div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div className="action-row" style={{ justifyContent: 'flex-end' }}>
+                  <button
+                    type="button"
+                    className="btn btn-primary btn-sm"
+                    onClick={() => setLessonTab('forms')}
+                  >
+                    <span>Ďalej: Ako tvoriť vety (+ / − / ?)</span>
+                    <ArrowRight size={15} aria-hidden="true" />
+                  </button>
+                </div>
+              </div>
             )}
 
-            {/* Forming Rules */}
-            <div style={{ display: 'grid', gap: '0.65rem' }}>
-              {activeGuide.formingRulesSk.map((rule) => (
-                <div key={rule.title} className="card-muted">
-                  <div style={{ fontWeight: 700, fontSize: '0.92rem', marginBottom: '0.3rem' }}>
-                    {rule.title}
-                  </div>
-                  <ul style={{ color: 'var(--text-secondary)' }}>
-                    {rule.points.map((pt) => (
-                      <li key={pt}>{pt}</li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </div>
-
-            {/* Signal Words */}
-            <div className="row">
-              <span style={{ fontSize: '0.84rem', fontWeight: 700, color: 'var(--text-muted)' }}>
-                Typické slovíčka (signály):
-              </span>
-              {activeGuide.signalWords.map((sw) => (
-                <span key={sw.en} className="badge badge-blue">
-                  {sw.en} ({sw.sk})
-                </span>
-              ))}
-            </div>
-
-            {/* 4-Polarity Matrix (+, -, ?+, ?-) */}
-            <div>
-              <h4 style={{ margin: '0 0 0.5rem', fontSize: '0.96rem' }}>
-                Tvorba všetkých 4 foriem (+, −, ?+, ?−) so zvukom:
-              </h4>
-              <div className="matrix-grid" style={{ margin: 0 }}>
-                {activeGuide.matrix.map((row) => (
-                  <div key={row.polarity} className={`matrix-card ${row.polarity}`}>
-                    <div className="matrix-head">
-                      <span>
-                        <span className="mono">{row.badge}</span> {row.labelSk}
-                      </span>
-                      <AudioButton text={row.en} accent={accent} rate={rate} iconOnly />
-                    </div>
-                    <div className="mono matrix-formula">{row.formula}</div>
-                    <div className="matrix-en">{row.en}</div>
-                    {row.enFormal && (
-                      <div
-                        style={{
-                          fontSize: '0.8rem',
-                          color: 'var(--text-muted)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.4rem',
-                        }}
-                      >
-                        <span>Formálne: {row.enFormal}</span>
-                        <AudioButton text={row.enFormal} accent={accent} rate={rate} iconOnly />
+            {/* === LESSON TAB 2: FORMING SENTENCES (+ / - / ?+ / ?-) === */}
+            {lessonTab === 'forms' && (
+              <div className="stack">
+                <div>
+                  <h4 style={{ margin: '0 0 0.5rem', fontSize: '0.96rem' }}>
+                    Všetky 4 formy vety (+, −, ?+, ?−) so zvukom:
+                  </h4>
+                  <div className="matrix-grid" style={{ margin: 0 }}>
+                    {activeGuide.matrix.map((row) => (
+                      <div key={row.polarity} className={`matrix-card ${row.polarity}`}>
+                        <div className="matrix-head">
+                          <span>
+                            <span className="mono">{row.badge}</span> {row.labelSk}
+                          </span>
+                          <AudioButton text={row.en} accent={accent} rate={rate} iconOnly />
+                        </div>
+                        <div className="mono matrix-formula">{row.formula}</div>
+                        <div className="matrix-en">{row.en}</div>
+                        {row.enFormal && (
+                          <div
+                            style={{
+                              fontSize: '0.8rem',
+                              color: 'var(--text-muted)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              gap: '0.4rem',
+                            }}
+                          >
+                            <span>Formálne: {row.enFormal}</span>
+                            <AudioButton text={row.enFormal} accent={accent} rate={rate} iconOnly />
+                          </div>
+                        )}
+                        <div style={{ fontSize: '0.88rem', color: 'var(--text-secondary)' }}>
+                          <span className="lang-tag">SK</span> {row.sk}
+                        </div>
+                        <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                          {row.whySk}
+                        </div>
                       </div>
-                    )}
-                    <div style={{ fontSize: '0.88rem', color: 'var(--text-secondary)' }}>
-                      <span className="lang-tag">SK</span> {row.sk}
-                    </div>
-                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                      {row.whySk}
-                    </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Contrast Box: Don't confuse with sibling tense */}
-            {activeGuide.contrast && (
-              <div className="contrast-box">
-                <div className="row-between" style={{ alignItems: 'center', marginBottom: '0.6rem' }}>
-                  <div>
-                    <div className="builder-eyebrow" style={{ marginBottom: '0.1rem' }}>
-                      <GitCompareArrows size={15} />
-                      <span>Ako si ho nepliesť</span>
-                    </div>
-                    <h4 style={{ margin: 0, fontSize: '1.02rem' }}>
-                      {activeGuide.contrast.titleSk}
-                    </h4>
-                    <p style={{ margin: '0.15rem 0 0', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                      {activeGuide.contrast.summarySk}
-                    </p>
-                  </div>
-                  {recommendedCombo && (
-                    <button
-                      type="button"
-                      className="btn btn-secondary btn-sm"
-                      onClick={() =>
-                        onLaunchQuiz({
-                          mode: 'combo',
-                          comboId: recommendedCombo.id,
-                          tenses: recommendedCombo.tenses,
-                          roundSize: 20,
-                          autoStart: true,
-                        })
-                      }
-                    >
-                      <GitCompareArrows size={15} aria-hidden="true" />
-                      <span>Precvičiť túto dvojicu</span>
-                    </button>
-                  )}
                 </div>
 
                 <div className="stack-sm">
-                  {activeGuide.contrast.pairs.map((pair, idx) => (
-                    <div key={idx} className="contrast-pair-wrap">
-                      <div className="two-col-grid">
-                        <div className="contrast-side">
-                          <span className="badge badge-blue">{pair.leftLabel}</span>
-                          <div className="row-between" style={{ alignItems: 'center', marginTop: '0.35rem' }}>
-                            <strong>{pair.leftEn}</strong>
-                            <AudioButton text={pair.leftEn} accent={accent} rate={rate} iconOnly />
-                          </div>
-                          <div className="small muted">{pair.leftSk}</div>
-                        </div>
-                        <div className="contrast-side">
-                          <span className="badge badge-purple">{pair.rightLabel}</span>
-                          <div className="row-between" style={{ alignItems: 'center', marginTop: '0.35rem' }}>
-                            <strong>{pair.rightEn}</strong>
-                            <AudioButton text={pair.rightEn} accent={accent} rate={rate} iconOnly />
-                          </div>
-                          <div className="small muted">{pair.rightSk}</div>
-                        </div>
+                  {activeGuide.formingRulesSk.map((rule) => (
+                    <div key={rule.title} className="card-muted">
+                      <div style={{ fontWeight: 700, fontSize: '0.92rem', marginBottom: '0.3rem' }}>
+                        {rule.title}
                       </div>
-                      <div className="contrast-diff">{pair.differenceSk}</div>
+                      <ul style={{ color: 'var(--text-secondary)' }}>
+                        {rule.points.map((pt) => (
+                          <li key={pt}>{pt}</li>
+                        ))}
+                      </ul>
                     </div>
                   ))}
+                </div>
+
+                <div className="two-col-grid">
+                  <div className="callout-tip">
+                    <div className="callout-title">
+                      <HelpCircle size={16} />
+                      <span>Krátke odpovede na otázky</span>
+                    </div>
+                    <div style={{ fontSize: '0.86rem', display: 'grid', gap: '0.25rem' }}>
+                      <div>
+                        Pozitívna: <strong>{activeGuide.shortAnswers.positiveQ}</strong>
+                      </div>
+                      <div>
+                        Negatívna: <strong>{activeGuide.shortAnswers.negativeQ}</strong>
+                      </div>
+                      <div>
+                        Odpovede: <span className="mono">{activeGuide.shortAnswers.yes}</span> /{' '}
+                        <span className="mono">{activeGuide.shortAnswers.no}</span>
+                      </div>
+                      <div style={{ color: 'var(--text-secondary)', marginTop: '0.15rem' }}>
+                        {activeGuide.shortAnswers.negAnswerNoteSk}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="callout-error">
+                    <div className="callout-title">
+                      <AlertTriangle size={16} />
+                      <span>Pozor na najčastejšiu chybu</span>
+                    </div>
+                    <div style={{ fontSize: '0.86rem', display: 'grid', gap: '0.25rem' }}>
+                      <div style={{ color: 'var(--rose)', textDecoration: 'line-through' }}>
+                        ✗ {activeGuide.commonMistakeSk.wrong}
+                      </div>
+                      <div style={{ color: 'var(--emerald)', fontWeight: 700 }}>
+                        ✓ {activeGuide.commonMistakeSk.right}
+                      </div>
+                      <div style={{ color: 'var(--text-secondary)', marginTop: '0.1rem' }}>
+                        {activeGuide.commonMistakeSk.explanationSk}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="action-row" style={{ justifyContent: 'space-between' }}>
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-sm"
+                    onClick={() => setSubView('lab')}
+                  >
+                    <Sparkles size={14} aria-hidden="true" />
+                    <span>Vyskúšať v laboratóriu viet</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-primary btn-sm"
+                    onClick={() =>
+                      setLessonTab(activeGuide.contrast ? 'contrast' : 'warmup')
+                    }
+                  >
+                    <span>
+                      {activeGuide.contrast ? 'Ďalej: Porovnanie časov' : 'Ďalej: Rýchla rozcvička'}
+                    </span>
+                    <ArrowRight size={15} aria-hidden="true" />
+                  </button>
                 </div>
               </div>
             )}
 
-            {/* Short Answers & Common Mistake */}
-            <div className="two-col-grid">
-              <div className="callout-tip">
-                <div className="callout-title">
-                  <HelpCircle size={16} />
-                  <span>Ako odpovedať na kladnú a zápornú otázku</span>
-                </div>
-                <div style={{ fontSize: '0.86rem', display: 'grid', gap: '0.25rem' }}>
-                  <div>
-                    Pozitívna: <strong>{activeGuide.shortAnswers.positiveQ}</strong>
-                  </div>
-                  <div>
-                    Negatívna: <strong>{activeGuide.shortAnswers.negativeQ}</strong>
-                  </div>
-                  <div>
-                    Odpovede: <span className="mono">{activeGuide.shortAnswers.yes}</span> /{' '}
-                    <span className="mono">{activeGuide.shortAnswers.no}</span>
-                  </div>
-                  <div style={{ color: 'var(--text-secondary)', marginTop: '0.15rem' }}>
-                    {activeGuide.shortAnswers.negAnswerNoteSk}
-                  </div>
-                </div>
-              </div>
-
-              <div className="callout-error">
-                <div className="callout-title">
-                  <AlertTriangle size={16} />
-                  <span>Pozor na typickú chybu</span>
-                </div>
-                <div style={{ fontSize: '0.86rem', display: 'grid', gap: '0.25rem' }}>
-                  <div style={{ color: 'var(--rose)', textDecoration: 'line-through' }}>
-                    ✗ {activeGuide.commonMistakeSk.wrong}
-                  </div>
-                  <div style={{ color: 'var(--emerald)', fontWeight: 700 }}>
-                    ✓ {activeGuide.commonMistakeSk.right}
-                  </div>
-                  <div style={{ color: 'var(--text-secondary)', marginTop: '0.1rem' }}>
-                    {activeGuide.commonMistakeSk.explanationSk}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Quick 3-Example Interactive Warm-Up inside the Lesson */}
-            <section className="warmup-box" aria-label="Rýchla rozcvička v lekcii">
-              <div className="row-between" style={{ alignItems: 'center', marginBottom: '0.65rem' }}>
-                <div>
-                  <h4 style={{ margin: 0, fontSize: '1rem' }}>
-                    Rýchla rozcvička (3 ukážky z {activeGuide.titleEn})
-                  </h4>
-                  <span className="small muted">
-                    Vyskúšaj si tento čas hneď na 3 príkladoch pred ostrým testom.
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  className="btn btn-primary btn-sm"
-                  onClick={() =>
-                    onLaunchQuiz({
-                      mode: 'single',
-                      tenses: [activeGuide.id],
-                      roundSize: 20,
-                      autoStart: true,
-                    })
-                  }
-                >
-                  <span>Spustiť celý test ({activeCount} príkladov)</span>
-                  <ArrowRight size={15} aria-hidden="true" />
-                </button>
-              </div>
-
-              <div className="stack-sm">
-                {warmupExercises.map((ex, idx) => {
-                  const chosen = warmupAnswers[ex.id];
-                  const opts = buildChoiceOptions(ex, 7);
-                  const isRight = chosen === ex.answer;
-                  const full = fillSentenceBlank(ex.sentenceWithBlank, ex.answer);
-
-                  return (
-                    <div key={ex.id} className="warmup-item">
-                      <div className="row-between" style={{ alignItems: 'center', marginBottom: '0.35rem' }}>
-                        <span className="small muted" style={{ fontWeight: 700 }}>
-                          Ukážka {idx + 1} · ({ex.verbCue})
-                        </span>
-                        <span className="badge badge-outline">
-                          {ex.polarity === 'aff'
-                            ? '+ Kladná'
-                            : ex.polarity === 'neg'
-                              ? '− Zápor'
-                              : '? Otázka'}
-                        </span>
+            {/* === LESSON TAB 3: CONTRAST WITH SIBLING TENSE === */}
+            {lessonTab === 'contrast' && activeGuide.contrast && (
+              <div className="stack">
+                <div className="contrast-box">
+                  <div
+                    className="row-between"
+                    style={{ alignItems: 'center', marginBottom: '0.65rem' }}
+                  >
+                    <div style={{ flex: '1 1 240px', minWidth: 0 }}>
+                      <div className="builder-eyebrow" style={{ marginBottom: '0.1rem' }}>
+                        <GitCompareArrows size={15} />
+                        <span>Ako si ho nepliesť</span>
                       </div>
-                      <div className="warmup-sentence">{ex.sentenceWithBlank}</div>
-                      <div className="warmup-choices">
-                        {opts.map((opt) => {
-                          let cls = '';
-                          if (chosen) {
-                            if (opt === ex.answer) cls = 'correct';
-                            else if (opt === chosen) cls = 'wrong';
-                          }
-                          return (
-                            <button
-                              key={opt}
-                              type="button"
-                              disabled={Boolean(chosen)}
-                              className={`warmup-opt ${cls}`}
-                              onClick={() => handleWarmupPick(ex, opt)}
+                      <h4 style={{ margin: 0, fontSize: '1.04rem' }}>
+                        {activeGuide.contrast.titleSk}
+                      </h4>
+                      <p
+                        style={{
+                          margin: '0.2rem 0 0',
+                          fontSize: '0.86rem',
+                          color: 'var(--text-secondary)',
+                        }}
+                      >
+                        {activeGuide.contrast.summarySk}
+                      </p>
+                    </div>
+                    {recommendedCombo && (
+                      <button
+                        type="button"
+                        className="btn btn-primary btn-sm"
+                        onClick={() =>
+                          onLaunchQuiz({
+                            mode: 'combo',
+                            comboId: recommendedCombo.id,
+                            tenses: recommendedCombo.tenses,
+                            roundSize: 20,
+                            autoStart: true,
+                          })
+                        }
+                      >
+                        <GitCompareArrows size={15} aria-hidden="true" />
+                        <span>Test tejto dvojice</span>
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="stack-sm">
+                    {activeGuide.contrast.pairs.map((pair, idx) => (
+                      <div key={idx} className="contrast-pair-wrap">
+                        <div className="two-col-grid">
+                          <div className="contrast-side">
+                            <span className="badge badge-blue">{pair.leftLabel}</span>
+                            <div
+                              className="row-between"
+                              style={{ alignItems: 'center', marginTop: '0.35rem' }}
                             >
-                              {opt}
-                            </button>
-                          );
-                        })}
-                      </div>
-                      {chosen && (
-                        <div
-                          className={isRight ? 'callout-success' : 'callout-error'}
-                          style={{ marginTop: '0.55rem', padding: '0.65rem 0.85rem' }}
-                        >
-                          <div className="row-between" style={{ alignItems: 'center' }}>
-                            <strong style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
-                              {isRight ? (
-                                <CheckCircle2 size={15} color="var(--emerald)" />
-                              ) : (
-                                <XCircle size={15} color="var(--rose)" />
-                              )}
-                              {full}
-                            </strong>
-                            <AudioButton text={full} accent={accent} rate={rate} iconOnly />
+                              <strong style={{ flex: '1 1 160px', minWidth: 0 }}>
+                                {pair.leftEn}
+                              </strong>
+                              <AudioButton text={pair.leftEn} accent={accent} rate={rate} iconOnly />
+                            </div>
+                            <div className="small muted">{pair.leftSk}</div>
                           </div>
-                          <div className="small" style={{ marginTop: '0.2rem' }}>
-                            {ex.translationSk}
-                          </div>
-                          <div className="small muted" style={{ marginTop: '0.15rem' }}>
-                            {ex.explanationSk}
+                          <div className="contrast-side">
+                            <span className="badge badge-purple">{pair.rightLabel}</span>
+                            <div
+                              className="row-between"
+                              style={{ alignItems: 'center', marginTop: '0.35rem' }}
+                            >
+                              <strong style={{ flex: '1 1 160px', minWidth: 0 }}>
+                                {pair.rightEn}
+                              </strong>
+                              <AudioButton
+                                text={pair.rightEn}
+                                accent={accent}
+                                rate={rate}
+                                iconOnly
+                              />
+                            </div>
+                            <div className="small muted">{pair.rightSk}</div>
                           </div>
                         </div>
-                      )}
-                    </div>
-                  );
-                })}
+                        <div className="contrast-diff">{pair.differenceSk}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="action-row" style={{ justifyContent: 'flex-end' }}>
+                  <button
+                    type="button"
+                    className="btn btn-primary btn-sm"
+                    onClick={() => setLessonTab('warmup')}
+                  >
+                    <span>Ďalej: Rýchla rozcvička (3 úlohy)</span>
+                    <ArrowRight size={15} aria-hidden="true" />
+                  </button>
+                </div>
               </div>
-            </section>
+            )}
+
+            {/* === LESSON TAB 4: QUICK 3-ITEM WARMUP === */}
+            {lessonTab === 'warmup' && (
+              <section className="warmup-box" aria-label="Rýchla rozcvička v lekcii">
+                <div
+                  className="row-between"
+                  style={{ alignItems: 'center', marginBottom: '0.65rem' }}
+                >
+                  <div>
+                    <h4 style={{ margin: 0, fontSize: '1rem' }}>
+                      Rýchla rozcvička (3 ukážky z {activeGuide.titleEn})
+                    </h4>
+                    <span className="small muted">
+                      Vyskúšaj si tento čas hneď na 3 príkladoch pred ostrým testom.
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    className="btn btn-primary btn-sm"
+                    onClick={() =>
+                      onLaunchQuiz({
+                        mode: 'single',
+                        tenses: [activeGuide.id],
+                        roundSize: 20,
+                        autoStart: true,
+                      })
+                    }
+                  >
+                    <span>Spustiť celý test ({activeCount} príkladov)</span>
+                    <ArrowRight size={15} aria-hidden="true" />
+                  </button>
+                </div>
+
+                <div className="stack-sm">
+                  {warmupExercises.map((ex, idx) => {
+                    const chosen = warmupAnswers[ex.id];
+                    const opts = buildChoiceOptions(ex, 7);
+                    const isRight = chosen === ex.answer;
+                    const full = fillSentenceBlank(ex.sentenceWithBlank, ex.answer);
+
+                    return (
+                      <div key={ex.id} className="warmup-item">
+                        <div
+                          className="row-between"
+                          style={{ alignItems: 'center', marginBottom: '0.35rem' }}
+                        >
+                          <span className="small muted" style={{ fontWeight: 700 }}>
+                            Ukážka {idx + 1} · ({ex.verbCue})
+                          </span>
+                          <span className="badge badge-outline">
+                            {ex.polarity === 'aff'
+                              ? '+ Kladná'
+                              : ex.polarity === 'neg'
+                                ? '− Zápor'
+                                : '? Otázka'}
+                          </span>
+                        </div>
+                        <div className="warmup-sentence">{ex.sentenceWithBlank}</div>
+                        <div className="warmup-choices">
+                          {opts.map((opt) => {
+                            let cls = '';
+                            if (chosen) {
+                              if (opt === ex.answer) cls = 'correct';
+                              else if (opt === chosen) cls = 'wrong';
+                            }
+                            return (
+                              <button
+                                key={opt}
+                                type="button"
+                                disabled={Boolean(chosen)}
+                                className={`warmup-opt ${cls}`}
+                                onClick={() => handleWarmupPick(ex, opt)}
+                              >
+                                {opt}
+                              </button>
+                            );
+                          })}
+                        </div>
+                        {chosen && (
+                          <div
+                            className={isRight ? 'callout-success' : 'callout-error'}
+                            style={{ marginTop: '0.55rem', padding: '0.65rem 0.85rem' }}
+                          >
+                            <div className="row-between" style={{ alignItems: 'center' }}>
+                              <strong
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '0.35rem',
+                                  flex: '1 1 180px',
+                                  minWidth: 0,
+                                }}
+                              >
+                                {isRight ? (
+                                  <CheckCircle2 size={15} color="var(--emerald)" />
+                                ) : (
+                                  <XCircle size={15} color="var(--rose)" />
+                                )}
+                                <span>{full}</span>
+                              </strong>
+                              <AudioButton text={full} accent={accent} rate={rate} iconOnly />
+                            </div>
+                            <div className="small" style={{ marginTop: '0.2rem' }}>
+                              {ex.translationSk}
+                            </div>
+                            <div className="small muted" style={{ marginTop: '0.15rem' }}>
+                              {ex.explanationSk}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
+            )}
 
             {/* Step-by-Step Footer Navigation */}
             <div className="lesson-footer">
@@ -726,7 +940,7 @@ export function GrammarSection({
                   }}
                 >
                   <span>
-                    Ďalší krok: {nextGuide.order}. {nextGuide.shortTitleSk}
+                    Ďalší čas: {nextGuide.order}. {nextGuide.shortTitleSk}
                   </span>
                   <ArrowRight size={16} aria-hidden="true" />
                 </button>
@@ -768,193 +982,6 @@ export function GrammarSection({
       {/* === SUBVIEW 3: INTERACTIVE SENTENCE LAB === */}
       {subView === 'lab' && (
         <SentenceLab accent={accent} rate={rate} initialTenseId={activeGuide.id} />
-      )}
-
-      {/* === SUBVIEW 4: QUICK REFERENCE MAP OF ALL 9 TENSES === */}
-      {subView === 'map' && (
-        <div className="card">
-          <div className="row-between" style={{ alignItems: 'center', marginBottom: '0.85rem' }}>
-            <div>
-              <h3 style={{ margin: 0, fontSize: '1.15rem' }}>
-                Rýchla mapa všetkých 9 časov na jednom mieste
-              </h3>
-              <span className="small muted">
-                Ťukni na ktorýkoľvek čas pre otvorenie lekcie alebo priame spustenie testu.
-              </span>
-            </div>
-          </div>
-
-          <div className="verb-table-wrap">
-            <table className="verb-table">
-              <thead>
-                <tr>
-                  <th>Krok & Čas</th>
-                  <th>Kladná (+)</th>
-                  <th>Zápor (−)</th>
-                  <th>Otázka (?+ / ?−)</th>
-                  <th>Pokrok</th>
-                  <th>Akcia</th>
-                </tr>
-              </thead>
-              <tbody>
-                {TENSE_GUIDES.map((g) => {
-                  const m = masteryByTense[g.id];
-                  return (
-                    <tr key={g.id}>
-                      <td>
-                        <button
-                          type="button"
-                          className="table-link-btn"
-                          onClick={() => handleSelectTense(g.id)}
-                        >
-                          <strong>
-                            {g.order}. {g.shortTitleSk}
-                          </strong>
-                          <div className="table-sub">
-                            {g.titleEn} · {g.level}
-                          </div>
-                        </button>
-                      </td>
-                      <td className="mono">{g.matrix[0].formula.replace('Podmet + ', '')}</td>
-                      <td className="mono">{g.matrix[1].formula.replace('Podmet + ', '')}</td>
-                      <td className="mono">{g.matrix[2].formula}</td>
-                      <td>
-                        <span className={`badge ${m.status === 'mastered' ? 'badge-emerald' : 'badge-blue'}`}>
-                          {m.mastered}/{m.total}
-                        </span>
-                      </td>
-                      <td>
-                        <button
-                          type="button"
-                          className="btn btn-secondary btn-sm"
-                          onClick={() =>
-                            onLaunchQuiz({
-                              mode: 'single',
-                              tenses: [g.id],
-                              roundSize: 20,
-                              autoStart: true,
-                            })
-                          }
-                        >
-                          Test ({m.total})
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {/* === SUBVIEW 5: POSITIVE & NEGATIVE QUESTIONS MASTER GUIDE === */}
-      {subView === 'questions' && (
-        <article
-          className="card"
-          style={{
-            display: 'grid',
-            gap: '1rem',
-            border: '2px solid color-mix(in srgb, var(--amber) 40%, var(--border-subtle))',
-          }}
-        >
-          <div>
-            <div
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.4rem',
-                color: 'var(--amber)',
-                fontWeight: 800,
-                fontSize: '0.84rem',
-                marginBottom: '0.25rem',
-              }}
-            >
-              <MessageCircleQuestion size={17} />
-              <span>Osobitný návod na opytovanie</span>
-            </div>
-            <h3 style={{ margin: 0, fontFamily: 'var(--font-display)', fontSize: '1.45rem' }}>
-              {QUESTION_MASTER_GUIDE.titleSk}
-            </h3>
-            <p style={{ margin: '0.35rem 0 0', color: 'var(--text-secondary)', fontSize: '0.93rem' }}>
-              {QUESTION_MASTER_GUIDE.introSk}
-            </p>
-          </div>
-
-          <div style={{ display: 'grid', gap: '0.85rem' }}>
-            {QUESTION_MASTER_GUIDE.goldenRules.map((rule) => (
-              <div key={rule.title} className="card-muted" style={{ display: 'grid', gap: '0.6rem' }}>
-                <div style={{ fontWeight: 800, fontSize: '0.96rem' }}>{rule.title}</div>
-                <p style={{ margin: 0, fontSize: '0.89rem', color: 'var(--text-secondary)' }}>
-                  {rule.descriptionSk}
-                </p>
-                <div className="two-col-grid">
-                  <div
-                    className="card"
-                    style={{
-                      padding: '0.75rem 0.9rem',
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      gap: '0.5rem',
-                    }}
-                  >
-                    <div>
-                      <span className="badge badge-blue" style={{ marginBottom: '0.25rem' }}>
-                        Pozitívna / príklad 1
-                      </span>
-                      <div style={{ fontWeight: 800, fontSize: '0.95rem' }}>{rule.posExample}</div>
-                      <div style={{ fontSize: '0.84rem', color: 'var(--text-secondary)' }}>
-                        {rule.posSk}
-                      </div>
-                    </div>
-                    <AudioButton text={rule.posExample} accent={accent} rate={rate} iconOnly />
-                  </div>
-
-                  <div
-                    className="card"
-                    style={{
-                      padding: '0.75rem 0.9rem',
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      gap: '0.5rem',
-                    }}
-                  >
-                    <div>
-                      <span className="badge badge-amber" style={{ marginBottom: '0.25rem' }}>
-                        Negatívna / príklad 2
-                      </span>
-                      <div style={{ fontWeight: 800, fontSize: '0.95rem' }}>{rule.negExample}</div>
-                      <div style={{ fontSize: '0.84rem', color: 'var(--text-secondary)' }}>
-                        {rule.negSk}
-                      </div>
-                    </div>
-                    <AudioButton text={rule.negExample} accent={accent} rate={rate} iconOnly />
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="action-row">
-            <button
-              type="button"
-              className="btn btn-primary"
-              onClick={() =>
-                onLaunchQuiz({
-                  mode: 'all',
-                  tenses: TENSE_GUIDES.map((g) => g.id),
-                  roundSize: 20,
-                  autoStart: false,
-                })
-              }
-            >
-              <span>Precvičiť si otázky v teste časov</span>
-              <ArrowRight size={16} aria-hidden="true" />
-            </button>
-          </div>
-        </article>
       )}
     </div>
   );

@@ -543,6 +543,34 @@ export function GrammarQuiz({
           <div className="studio-layout">
             {/* Left / Main Selector */}
             <div className="card">
+              {/* Quick Launch Strip right above the selector so mobile & half-screen users don't have to scroll down */}
+              <div className="quiz-quick-launch">
+                <div style={{ minWidth: 0, flex: '1 1 200px' }}>
+                  <div className="small muted">Pripravený výber ({candidatePool.length} viet v banke):</div>
+                  <strong style={{ fontSize: '0.95rem', display: 'block', overflowWrap: 'anywhere' }}>
+                    {selectionMode === 'single'
+                      ? `${TENSE_GUIDE_MAP[singleTense].order}. ${TENSE_GUIDE_MAP[singleTense].shortTitleSk} (${TENSE_GUIDE_MAP[singleTense].titleEn})`
+                      : selectionMode === 'combo'
+                        ? (TENSE_COMBO_PRESETS.find((c) => c.id === selectedComboId)?.titleSk ??
+                          'Kombinácia časov')
+                        : selectionMode === 'custom'
+                          ? `Vlastný mix (${customTenses.length} z 9 časov)`
+                          : 'Finálny mix všetkých 9 časov'}
+                  </strong>
+                </div>
+                <button
+                  type="button"
+                  className="btn btn-primary btn-sm"
+                  disabled={candidatePool.length === 0}
+                  onClick={() => launchFromCurrentConfig()}
+                >
+                  <Play size={15} aria-hidden="true" />
+                  <span>
+                    Spustiť ({Math.min(roundSize, candidatePool.length)} úloh)
+                  </span>
+                </button>
+              </div>
+
               {selectionMode === 'single' && (
                 <div>
                   <div className="row-between" style={{ alignItems: 'center', marginBottom: '0.8rem' }}>
@@ -880,15 +908,13 @@ export function GrammarQuiz({
               <ArrowLeft size={15} aria-hidden="true" />
               <span>Nastavenie</span>
             </button>
-            <div className="quiz-topbar-meta">
-              <span className="quiz-round-name">{roundLabel}</span>
-            </div>
             <div className="stat-pill" aria-live="polite">
               Skóre: {correctCount}/{answeredCount}
             </div>
           </div>
 
           <div className="practice-stage">
+            <div className="quiz-round-banner">{roundLabel}</div>
             <div className="row-between" style={{ alignItems: 'center', marginBottom: '0.55rem' }}>
               <span className="small" style={{ fontWeight: 750, color: 'var(--text-secondary)' }}>
                 Úloha {index + 1} z {roundExercises.length}

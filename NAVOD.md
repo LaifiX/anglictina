@@ -1,6 +1,6 @@
 # Angličtina do vrecka
 
-Responzívna webová aplikácia na učenie a precvičovanie anglických nepravidelných slovies, 9 najdôležitejších anglických časov (A1–B2), hlbokej teórie „polopate“ pre Slovákov a 2 250 cvičných príkladov so zvukovými ukážkami.
+Responzívna webová aplikácia na praktické učenie sa angličtiny pre Slovákov: **praktický kurz A1 → B1 (cestovanie, bežné situácie a konverzácia)**, **9 anglických časov s prehľadnou teóriou polopate**, **2 250 cvičných príkladov na časy** a **100 nepravidelných slovies** — s kompletným automatickým ukladaním pokroku v prehliadači (`localStorage`).
 
 ## Ako aplikáciu spustiť
 
@@ -15,27 +15,19 @@ Responzívna webová aplikácia na učenie a precvičovanie anglických nepravid
 
 ## Čo aplikácia obsahuje
 
-- **Prehľad slovies (100 nepravidelných slovies):** vyhľadávanie po slovensky aj po anglicky, všetky tvary (`V1`, `V2`, `V3`, `3. osoba -s`, `-ing`), fonetický prepis IPA aj slovenský prepis výslovnosti, podrobné slovenské vysvetlenie, vzorové vety a **zvukové ukážky** (britský UK alebo americký US prízvuk + normálna/pomalá rýchlosť).
-- **Precvičovanie slovies vo všetkých tvaroch:** 7 režimov (V1+V2+V3, V2+V3, všetkých 5 tvarov, náhodná medzera, kontext vo vete, výber z možností, kartičky so zvukom).
-- **Kurz časov (9 krokov od A1 po B2) + Akadémia teórie polopate:**
-  1. Present Simple (Prítomný jednoduchý)
-  2. Present Continuous (Prítomný priebehový)
-  3. Past Simple (Minulý jednoduchý)
-  4. Past Continuous (Minulý priebehový)
-  5. Future `will` (Budúci čas s „will“)
-  6. Future `be going to` (Budúci čas s „going to“)
-  7. Present Perfect (Predprítomný čas – most k V3)
-  8. Present Perfect Continuous (Predprítomný priebehový čas)
-  9. Past Perfect (Predminulý čas)
-  - Každý krok obsahuje vizuálnu časovú os, **akademickú teóriu polopate** (mentálny model, nuansy a prekladový most pre Slovákov), všetky 4 formy (`+`, `−`, `?+`, `?−`) so zvukom, porovnanie s príbuzným časom a 3-úlohovú rozcvičku.
-  - Samostatná sekcia **Teória polopate**: interaktívny **Rozhodovací kompas** („Ktorý čas použiť?“), matica 3 × 4 (slovenský vid vs. anglické aspekty), tajomstvo pomocných slovies `do/does/did`, 7 najväčších pascí pre Slovákov, stavové vs. dejové slovesá, slovosled **SVOMPT**, pravopis a výslovnosť koncovky `-ed` (`[t] / [d] / [ɪd]`) so zvukom.
-  - Nechýba **Interaktívne laboratórium viet** (všetkých 9 časov), **Rýchla mapa 9 časov** a návod na **pozitívne a negatívne otázky**.
-- **Testy z časov (2 250 unikátnych príkladov – 250 na každý čas):**
-  - **Jeden čas:** 250 príkladov ku každému z 9 časov.
-  - **8 odporúčaných kombinácií:** postupné porovnávacie testy (500 až 1 500 príkladov v balíku).
-  - **Vlastný výber:** ľubovoľná kombinácia 2–9 časov.
-  - **Finálny mix:** rovnomerne premiešané otázky zo všetkých 9 časov naraz (bez prezrádzania názvu času pred odpoveďou).
-  - **Štýly testovania:** Výber zo 4 možností (pohodlný na mobil), Dopisovanie do vety (uznáva skrátené aj plné tvary, s postupnou nápovedou), alebo Striedavo (Mix); dĺžka kola `10 / 20 / 50 / 100 / 250`, filter formy viet (`+ / − / ?`) a **opakovanie chýb**.
+- **Praktický kurz A1 → A2 → B1 (Cestovanie, bežné situácie & konverzácia):**
+  - **16 tematických lekcií** (7× A1, 5× A2, 4× B1) vrátane rýchleho rozcestníka situácií na 1 klik: **kupovanie lístkov** (MHD, vlak, múzeá), **opýtanie sa, keď niečo hľadáš** (na ulici, stanici aj v budove), **nákup v potravinách a pekárni**, **jedlo zo stánku (street food) a v reštaurácii**, letisko, hotel, oblečenie a reklamácie, lekáreň, požičovňa áut, vyjadrovanie názoru a plynulé príbehy.
+  - **320 praktických slovíčok a fráz** so zvukom, výslovnosťou, vzorovou vetou, prehľadným zoznamom aj **otočnými kartičkami**.
+  - **160 kľúčových viet do praxe + 20 reálnych viacdielnych dialógov** s prehratím celého rozhovoru jedným klikom.
+  - **192 interaktívnych úloh** (slovíčka, vety, reakcie v dialógu, gramatika a časy) + veľké testy pre A1, A2, B1, cestovateľský mix a opakovanie chýb.
+- **Živá horná lišta a ukladanie pokroku v prehliadači:**
+  - Počítadlo v hornej lište okamžite reaguje na každú vyriešenú úlohu (prispôsobuje sa aktívnej sekcii + zobrazuje denný počet úloh).
+  - Kliknutím na počítadlo otvoríš **Môj pokrok a štatistiky učenia** (vrátane stiahnutia a obnovenia JSON zálohy pre prenos medzi počítačom a mobilom).
+- **Kurz časov a teória (9 časov od A1 po B2):**
+  - Vizuálne rozdelenie časov na **Prítomnosť · Minulosť · Budúcnosť** (alebo postupnosť 1 → 9) a 4 prehľadné karty v každej lekcii.
+  - **Teória polopate (8 samostatných kapitol):** Rozhodovací kompas, Mapa 3 × 4, Pomocné slovesá `do/does/did`, Kladné a záporné otázky, 7 pascí pre Slovákov, Stavové slovesá, Slovosled **SVOMPT**, Pravopis a výslovnosť `-ed` + **Laboratórium viet**.
+- **Testy z časov (2 250 unikátnych príkladov – 250 na každý čas):** jeden čas, 8 kombinácií, vlastný výber aj finálny mix všetkých 9 časov (`10 / 20 / 50 / 100 / 250` úloh).
+- **Prehľad a precvičovanie 100 nepravidelných slovies:** vyhľadávanie po slovensky aj po anglicky, všetkých 5 tvarov (`V1`, `V2`, `V3`, `3. osoba -s`, `-ing`), výslovnosť UK/US a 7 tréningových režimov.
 
 ## Overenie a testy
 

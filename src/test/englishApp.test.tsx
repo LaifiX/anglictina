@@ -8,6 +8,11 @@ import {
   TENSE_ORDER,
 } from '../data/grammarData';
 import { IRREGULAR_VERBS } from '../data/irregularVerbs';
+import {
+  ALL_COURSE_EXERCISES,
+  CEFR_LEVEL_META,
+  PRACTICAL_MODULES,
+} from '../data/pathway';
 import { ALL_TENSE_EXERCISES, EXERCISES_BY_TENSE } from '../data/tenses';
 import {
   DEEP_THEORY_BY_TENSE,
@@ -76,6 +81,54 @@ describe('Irregular Verbs Dataset Integrity', () => {
   });
 });
 
+describe('Practical A1-B1 Travel & Conversation Course Integrity', () => {
+  it('contains 16 progressive modules across A1, A2, B1 with 320 vocab items, 160 sentences, and 192 exercises', () => {
+    expect(CEFR_LEVEL_META.map((m) => m.level)).toEqual(['A1', 'A2', 'B1']);
+    expect(PRACTICAL_MODULES.length).toBe(16);
+    expect(ALL_COURSE_EXERCISES.length).toBe(192);
+
+    const vocabIds = new Set<string>();
+    const sentenceIds = new Set<string>();
+    const exerciseIds = new Set<string>();
+
+    for (const mod of PRACTICAL_MODULES) {
+      expect(mod.vocab.length).toBe(20);
+      expect(mod.sentences.length).toBe(10);
+      expect(mod.dialogue.turns.length).toBeGreaterThanOrEqual(4);
+      for (const extra of mod.extraDialogues ?? []) {
+        expect(extra.turns.length).toBeGreaterThanOrEqual(4);
+      }
+      expect(mod.exercises.length).toBe(12);
+      expect(mod.grammarPointsSk.length).toBe(3);
+
+      for (const v of mod.vocab) {
+        expect(vocabIds.has(v.id)).toBe(false);
+        vocabIds.add(v.id);
+        expect(v.en.trim().length).toBeGreaterThan(0);
+        expect(v.sk.trim().length).toBeGreaterThan(0);
+        expect(v.exampleEn.trim().length).toBeGreaterThan(5);
+      }
+
+      for (const s of mod.sentences) {
+        expect(sentenceIds.has(s.id)).toBe(false);
+        sentenceIds.add(s.id);
+        expect(s.en.trim().length).toBeGreaterThan(5);
+        expect(s.sk.trim().length).toBeGreaterThan(5);
+      }
+
+      for (const q of mod.exercises) {
+        expect(exerciseIds.has(q.id)).toBe(false);
+        exerciseIds.add(q.id);
+        expect(q.options).toHaveLength(4);
+        const uniqueOpts = new Set(q.options.map((o) => o.trim().toLowerCase()));
+        expect(uniqueOpts.size, `Duplicate options in ${q.id}`).toBe(4);
+        expect(q.options).toContain(q.answer);
+        expect(q.explanationSk.trim().length).toBeGreaterThan(10);
+      }
+    }
+  });
+});
+
 describe('2250 Tense Exercises Bank Integrity', () => {
   it('contains exactly 250 valid unique exercises per tense (2250 total) with all 4 polarities', () => {
     expect(ALL_TENSE_EXERCISES.length).toBe(2250);
@@ -101,11 +154,9 @@ describe('2250 Tense Exercises Bank Integrity', () => {
         ).toBe(false);
         seenSentences.add(sentenceKey);
 
-        // Exactly one ____ blank
         const blankMatches = ex.sentenceWithBlank.match(/____/g) ?? [];
         expect(blankMatches.length, `Bad blank count in ${ex.id}`).toBe(1);
 
-        // Clean fields, no draft notes
         expect(ex.verbCue.trim().length).toBeGreaterThan(0);
         expect(ex.answer.trim().length).toBeGreaterThan(0);
         expect(ex.translationSk.trim().length).toBeGreaterThan(5);
@@ -113,17 +164,14 @@ describe('2250 Tense Exercises Bank Integrity', () => {
         expect(ex.explanationSk).not.toMatch(/Opravíme|Upravíme|Počkaj —|zmeníme cue/i);
         expect(ex.sentenceWithBlank).not.toMatch(/wait:/i);
 
-        // 4 unique options (answer + 3 distractors)
         const allOptions = [ex.answer, ...ex.distractors];
         expect(allOptions).toHaveLength(4);
         const normOptions = new Set(allOptions.map((o) => o.trim().toLowerCase()));
         expect(normOptions.size, `Duplicate options in ${ex.id}: ${allOptions.join(', ')}`).toBe(4);
 
-        // Filled sentence has no leftover blank
         const filled = fillSentenceBlank(ex.sentenceWithBlank, ex.answer);
         expect(filled).not.toContain('____');
 
-        // Choice builder returns all 4 options
         const shuffled = buildChoiceOptions(ex, 1);
         expect(shuffled).toHaveLength(4);
         expect(shuffled).toContain(ex.answer);
@@ -327,6 +375,7 @@ describe('App UI Integration', () => {
 
   it('filters verbs in Slovak and opens detailed Slovak explanation modal', () => {
     render(<App />);
+    fireEvent.click(screen.getByRole('tab', { name: /Prehľad slovies/i }));
     const searchInput = screen.getByLabelText('Hľadať sloveso');
     fireEvent.change(searchInput, { target: { value: 'write' } });
 
@@ -356,6 +405,80 @@ describe('App UI Integration', () => {
     expect(screen.getByText(/Vysvetlenie po slovensky:/i)).toBeInTheDocument();
   });
 
+  it('updates topbar counters live across A1-B1 course, Tense tests, and persists progress in localStorage', () => {
+    const { unmount } = render(<App />);
+
+    // Default tab is Practical Course A1-B1 showing 0/672 in topbar
+    expect(
+      screen.getByText(/Praktická angličtina A1 → B1: Cestovanie & konverzácia/i)
+    ).toBeInTheDocument();
+    const topbarBtn = screen.getByRole('button', {
+      name: /Praktický kurz A1 až B1: 0 z 672 položiek/i,
+    });
+    expect(topbarBtn).toBeInTheDocument();
+
+    // Jump straight to "Kupovanie lístkov" everyday travel scenario -> opens sentences & dual dialogues!
+    fireEvent.click(screen.getAllByRole('button', { name: /Kupovanie lístkov/i })[0]);
+    expect(screen.getByText(/1\. Pri pokladni na vlakovej stanici/i)).toBeInTheDocument();
+    expect(screen.getByText(/2\. Kupovanie vstupeniek do hradu a múzea/i)).toBeInTheDocument();
+
+    // Mark 1 vocab word learned in A1.5 -> topbar immediately increments to 1/672 + Dnes: 1
+    fireEvent.click(screen.getByRole('tab', { name: /2\. Slovíčka/i }));
+    const saveWordBtns = screen.getAllByRole('button', { name: /Uložiť/i });
+    fireEvent.click(saveWordBtns[0]);
+
+    expect(
+      screen.getByRole('button', {
+        name: /Praktický kurz A1 až B1: 1 z 672 položiek\. Dnes vyriešených úloh: 1/i,
+      })
+    ).toBeInTheDocument();
+
+    // Switch to Tense Test Studio -> topbar switches contextually to Príklady: 0/2250, then increments on right answer!
+    fireEvent.click(screen.getByRole('tab', { name: /Testy z časov/i }));
+    expect(
+      screen.getByRole('button', {
+        name: /Zvládnuté príklady z časov: 0 z 2250/i,
+      })
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /^10$/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Spustiť test \(10 úloh\)/i }));
+
+    // Pick the exact right answer for question 1 so tenseMasteredExamples becomes 1!
+    const allChoiceBtns = Array.from(document.querySelectorAll('.choice-btn'));
+    expect(allChoiceBtns.length).toBe(4);
+    const matchingExercise = EXERCISES_BY_TENSE['present-simple'].find((ex) =>
+      allChoiceBtns.every((b) => [ex.answer, ...ex.distractors].includes(b.textContent ?? ''))
+    );
+    expect(matchingExercise).toBeDefined();
+    const correctBtn = allChoiceBtns.find((b) => b.textContent === matchingExercise!.answer)!;
+    fireEvent.click(correctBtn);
+
+    expect(
+      screen.getByRole('button', {
+        name: /Zvládnuté príklady z časov: 1 z 2250\. Dnes vyriešených úloh: 2/i,
+      })
+    ).toBeInTheDocument();
+
+    // Open Progress Modal from topbar pill
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: /Zvládnuté príklady z časov: 1 z 2250/i,
+      })
+    );
+    expect(screen.getByText(/Môj pokrok a štatistiky učenia/i)).toBeInTheDocument();
+    expect(screen.getByText(/Uložené v tomto prehliadači/i)).toBeInTheDocument();
+
+    // Remount App and verify browser localStorage restored everything
+    unmount();
+    render(<App />);
+    expect(
+      screen.getByRole('button', {
+        name: /Zvládnuté príklady z časov: 1 z 2250\. Dnes vyriešených úloh: 2/i,
+      })
+    ).toBeInTheDocument();
+  });
+
   it('navigates 9-step Course, Polopate Theory Academy, Sentence Lab, and 2250-example Test Studio', () => {
     render(<App />);
     fireEvent.click(screen.getByRole('tab', { name: /Kurz časov/i }));
@@ -364,26 +487,30 @@ describe('App UI Integration', () => {
       screen.getByText(/Akademická teória polopate: Ako tento čas cíti Angličan/i)
     ).toBeInTheDocument();
 
-    // Open Polopate Theory Academy sub-tab
-    fireEvent.click(screen.getByRole('tab', { name: /Teória polopate/i }));
+    // Switch lesson sub-tabs cleanly (Forms -> Warmup)
+    fireEvent.click(screen.getByRole('tab', { name: /2\. Tvorba viet/i }));
+    expect(screen.getByText(/Všetky 4 formy vety/i)).toBeInTheDocument();
+
+    // Open Polopate Theory Academy sub-view (focused 8-chapter layout)
+    fireEvent.click(screen.getByRole('tab', { name: /2\. Teória polopate/i }));
     expect(
       screen.getByText(/Rozhodovací kompas: Ktorý z 9 časov mám použiť\?/i)
     ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /^Budúcnosť$/i }));
+    expect(screen.getByText(/Budúci čas s „will“/i)).toBeInTheDocument();
+
+    // Switch to Chapter 5 (7 Slovak traps)
+    fireEvent.click(screen.getByRole('tab', { name: /7 pascí pre Slovákov/i }));
     expect(
       screen.getByText(/7 najčastejších pascí, do ktorých padajú Slováci/i)
     ).toBeInTheDocument();
 
-    // Test Decision Compass switching to Future
-    fireEvent.click(screen.getByRole('button', { name: /^Budúcnosť$/i }));
-    expect(screen.getByText(/Budúci čas s „will“/i)).toBeInTheDocument();
-
-    // Open Sentence Lab
-    fireEvent.click(screen.getByRole('tab', { name: /Laboratórium viet/i }));
+    fireEvent.click(screen.getByRole('tab', { name: /3\. Laboratórium viet/i }));
     expect(
       screen.getByText(/Vyskúšaj si tvorbu času, kladnej aj zápornej otázky naživo/i)
     ).toBeInTheDocument();
 
-    // Switch to Test Studio (2250 exercises) and run a 250-example single tense or 10-example final mix
     fireEvent.click(screen.getByRole('tab', { name: /Testy z časov/i }));
     expect(screen.getByText(/Testy z anglických časov \(2250 príkladov\)/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /^250$/ })).toBeInTheDocument();
